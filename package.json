@@ -1,7 +1,7 @@
 {
-  "name": "@geoloniamaps/sprite-template",
+  "name": "smartcity-dm-sprite",
   "version": "1.0.0",
-  "description": "",
+  "description": "公共測量標準図式の地図記号を MapLibre 向けスプライトシートとして配信する",
   "main": "index.js",
   "scripts": {
     "build": "sprite-one -i./icons -r1 -r2 ./_site/sprite",
