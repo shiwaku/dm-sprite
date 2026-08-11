@@ -167,7 +167,17 @@ bbox・中心・線幅を実測して出す。中心が (32, 32)、線幅が 1.0
 
 ---
 
-## 6. ビルドして公開する
+## 6. 一覧を更新する
+
+名称のマスタは [`data/icons.csv`](../data/icons.csv)（`ファイル名,4桁コード,名称,分類`）。追加したアイコンの行を足す。分類は `標準図式` / `拡張DM` / `その他`。
+
+コミットしたあとに一覧を再生成する。追加日は git 履歴から取るので、**コミット後に実行する**こと。
+
+```bash
+python3 tools/gen_icon_list.py   # docs/icon-list.md を再生成
+```
+
+## 7. ビルドして公開する
 
 ```bash
 npm install
@@ -189,5 +199,7 @@ MapLibre 側は `icon-image` でスプライトのキー（= ファイル名か�
 ## 参考
 
 - [SVG 設計基準](svg-design-spec.md)
+- [アイコン一覧](icon-list.md)
 - `tools/gen_icons.py` — 作図ヘルパと作例
 - `tools/inspect_icons.py` — bbox・中心・線幅の実測
+- `tools/gen_icon_list.py` — アイコン一覧と追加履歴の生成
