@@ -1,7 +1,7 @@
-# 3. SVG 設計基準
+# SVG 設計基準
 
 > geolonia/smartcity-smartmap-dm-sprite-spec の `spec/03_svg_design.md` を本リポジトリに取り込んだもの。
-> この基準に沿った具体的な作成手順は [アイコン作成ガイド](アイコン作成ガイド.md) を参照。
+> この基準に沿った具体的な作成手順は [アイコン作成ガイド](icon-authoring-guide.md) を参照。
 
 ## ファイル形式
 

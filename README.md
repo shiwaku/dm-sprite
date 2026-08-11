@@ -6,8 +6,8 @@
 
 | ドキュメント | 内容 |
 |---|---|
-| [docs/アイコン作成ガイド.md](docs/アイコン作成ガイド.md) | 標準図式から SVG を起こす手順（図式の読み取り・大きさの決め方・作図・検証・公開） |
-| [docs/03_svg_design.md](docs/03_svg_design.md) | SVG 設計基準（64×64・単色・ストローク不使用など） |
+| [docs/icon-authoring-guide.md](docs/icon-authoring-guide.md) | 標準図式から SVG を起こす手順（図式の読み取り・大きさの決め方・作図・検証・公開） |
+| [docs/svg-design-spec.md](docs/svg-design-spec.md) | SVG 設計基準（64×64・単色・ストローク不使用など） |
 
 作図と検証には `tools/` のスクリプトを使う。
 
