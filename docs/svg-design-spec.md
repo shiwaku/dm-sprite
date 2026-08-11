@@ -1,6 +1,5 @@
 # SVG 設計基準
 
-> geolonia/smartcity-smartmap-dm-sprite-spec の `spec/03_svg_design.md` を本リポジトリに取り込んだもの。
 > この基準に沿った具体的な作成手順は [アイコン作成ガイド](icon-authoring-guide.md) を参照。
 
 ## ファイル形式
@@ -43,9 +42,8 @@
 ## ファイル配置
 
 ```
-smartcity-dm-sprite/
-  icons/
-    dm-{コード}.svg
+icons/
+  dm-{コード}.svg
 ```
 
 ## SVG サンプル（dm-7301.svg 三角点）
