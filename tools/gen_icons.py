@@ -4,14 +4,14 @@
 #   python3 tools/gen_icons.py            # tools/out_icons/ に書き出す
 #   python3 tools/gen_icons.py --install  # icons/ に直接書き出す
 #
-# 設計基準は docs/03_svg_design.md に従う。
+# 設計基準は docs/svg-design-spec.md に従う。
 #   64x64 / viewBox="0 0 64 64" / ルート fill="none" / 単色 fill="black" / 1パス
 #   ストロークは使わず、線はすべて塗りパス（アウトライン）で表現する。
 #
 # 形状と寸法は「作業規程の準則 付録7 公共測量標準図式」の図式欄から読み取る。
 # 大きさは mm 比の厳密再現ではなく、既存アイコンの実測レンジ
 #   （bbox 10〜22px・線幅 約1.1px・中心 (32,32)）に合わせる方針。
-# 読み取り手順と検証手順は docs/アイコン作成ガイド.md を参照。
+# 読み取り手順と検証手順は docs/icon-authoring-guide.md を参照。
 #
 # 末尾は 2026-08 に追加した6コードの作図例。新しい記号を足すときは
 # 同じ書き方で write(...) を1行ずつ増やす。

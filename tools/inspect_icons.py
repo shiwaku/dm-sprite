@@ -1,5 +1,5 @@
 # -----------------------------------------
-# アイコンの bbox・中心・線幅を実測する。docs/アイコン作成ガイド.md の検証手順で使う。
+# アイコンの bbox・中心・線幅を実測する。docs/icon-authoring-guide.md の検証手順で使う。
 #
 #   python3 tools/inspect_icons.py                 # icons/ 全件
 #   python3 tools/inspect_icons.py dm-7212 dm-3525 # 指定したものだけ

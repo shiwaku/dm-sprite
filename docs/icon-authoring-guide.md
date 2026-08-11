@@ -2,7 +2,7 @@
 
 公共測量標準図式の記号から、このリポジトリの SVG アイコンを作る手順。
 
-書式の決まりごとは [SVG 設計基準](03_svg_design.md) にある。このガイドは「その基準を満たす SVG を、図式からどう起こすか」を扱う。
+書式の決まりごとは [SVG 設計基準](svg-design-spec.md) にある。このガイドは「その基準を満たす SVG を、図式からどう起こすか」を扱う。
 
 ---
 
@@ -188,6 +188,6 @@ MapLibre 側は `icon-image` でスプライトのキー（= ファイル名か�
 
 ## 参考
 
-- [SVG 設計基準](03_svg_design.md)
+- [SVG 設計基準](svg-design-spec.md)
 - `tools/gen_icons.py` — 作図ヘルパと作例
 - `tools/inspect_icons.py` — bbox・中心・線幅の実測
