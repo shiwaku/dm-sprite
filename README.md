@@ -7,6 +7,7 @@
 | ドキュメント | 内容 |
 |---|---|
 | [docs/icon-list.md](docs/icon-list.md) | 収録アイコンの一覧と追加履歴 |
+| [docs/symbol-coverage.md](docs/symbol-coverage.md) | 図式に定義された記号のうちアイコンが要るのは何件で、残りは何件かの台帳 |
 | [docs/icon-authoring-guide.md](docs/icon-authoring-guide.md) | 標準図式から SVG を起こす手順（図式の読み取り・大きさの決め方・作図・検証・公開） |
 | [docs/svg-design-spec.md](docs/svg-design-spec.md) | SVG 設計基準（64×64・単色・ストローク不使用など） |
 
@@ -16,9 +17,18 @@
 python3 tools/gen_icons.py --install   # 作図ヘルパと作例。icons/ に書き出す
 python3 tools/inspect_icons.py dm-7212 # bbox・中心・線幅を実測
 python3 tools/gen_icon_list.py         # docs/icon-list.md を再生成
+python3 tools/gen_symbol_coverage.py   # docs/symbol-coverage.md を再生成
 ```
 
-アイコンを追加したら [`data/icons.csv`](data/icons.csv)（名称のマスタ）に行を足し、コミット後に `gen_icon_list.py` を実行して一覧を更新する。
+アイコンを追加したら [`data/icons.csv`](data/icons.csv)（名称のマスタ）に行を足し、コミット後に `gen_icon_list.py` を実行して一覧を更新する。カバレッジ側は `gen_symbol_coverage.py` で更新する。
+
+図式の台帳 [`data/symbols.csv`](data/symbols.csv) は図式 PDF から起こしたもので、作り直すときだけ PDF が要る。
+
+```bash
+python3 tools/extract_symbol_table.py ~/公共測量標準図式.pdf   # data/symbols.csv を再抽出
+```
+
+PDF は国土地理院が公開している[作業規程の準則 付録7 公共測量標準図式](https://www.gsi.go.jp/common/000258741.pdf)。サイズが大きいのでリポジトリには置いていない。
 
 ---
 

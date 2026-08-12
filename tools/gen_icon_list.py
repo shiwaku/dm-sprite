@@ -31,6 +31,20 @@ def load_names():
     return names
 
 
+def coverage_line():
+    """図式の台帳（data/symbols.csv）と突き合わせた進捗を1行で返す。"""
+    path = os.path.join(ROOT, 'data', 'symbols.csv')
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding='utf-8-sig', newline='') as fp:
+        rows = [r for r in csv.DictReader(fp) if r['図式区分'] == '標準図式']
+    target = [r for r in rows if r['アイコン対象']]
+    done = [r for r in target if r['アイコン']]
+    return (f'標準図式のカバレッジ: **{len(done)}/{len(target)}件**'
+            f'（未作成 {len(target) - len(done)}件）。'
+            f'内訳は [symbol-coverage.md](symbol-coverage.md) を参照。')
+
+
 def added_info(fname):
     """そのファイルが追加されたコミットの日付・ハッシュ・件名を返す。
     改名（0296aa9 でアイコンを一斉リネームしている）を辿るため --follow を使うが、
@@ -68,6 +82,11 @@ def main():
         '',
         f'収録数: **{len(files)}件**',
         '',
+    ]
+    cov = coverage_line()
+    if cov:
+        lines += [cov, '']
+    lines += [
         '## 追加履歴',
         '',
         '| 追加日 | 件数 | コミット | 内容 | コード |',
