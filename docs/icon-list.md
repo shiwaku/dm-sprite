@@ -2,14 +2,15 @@
 
 > `python3 tools/gen_icon_list.py` で生成。直接編集しない。
 
-収録数: **121件**
+収録数: **140件**
 
-標準図式のカバレッジ: **114/185件**（未作成 71件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
+標準図式のカバレッジ: **133/185件**（未作成 52件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
 
 ## 追加履歴
 
 | 追加日 | 件数 | コミット | 内容 | コード |
 |---|---:|---|---|---|
+| 2026-08-13 | 19 | `a91c117` | feat: 建物等（レイヤ35）の未作成アイコン19件を追加する | 3503 3504 3505 3507 3508 3511 3512 3513 3517 3518 3524 3527 3528 3529 3539 3549 3552 3553 3557 |
 | 2026-08-12 | 8 | `55e7386` | feat: 道路台帳平面図で使う標準図式アイコン8件を追加する | 2221 2246 2261 2262 3559 4132 4142 7306 |
 | 2026-08-11 | 6 | `a1482eb` | 不足していた標準図式アイコン6件を追加 | 2219 3519 3531 5227 6335 7212 |
 | 2026-02-26 | 8 | `5ece2cb` | 不足アイコンを追加 | 4239 5221 6314 6337 7206 7303 7304 7305 |
@@ -36,27 +37,46 @@
 | <img src="../icons/dm-2261.svg" width="28" height="28"> | `dm-2261.svg` | 2261 | 電話ボックス | 標準図式 | 2026-08-12 |
 | <img src="../icons/dm-2262.svg" width="28" height="28"> | `dm-2262.svg` | 2262 | 郵便ポスト | 標準図式 | 2026-08-12 |
 | <img src="../icons/dm-3401.svg" width="28" height="28"> | `dm-3401.svg` | 3401 | 門 | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-3503.svg" width="28" height="28"> | `dm-3503.svg` | 3503 | 官公署 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3504.svg" width="28" height="28"> | `dm-3504.svg` | 3504 | 裁判所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3505.svg" width="28" height="28"> | `dm-3505.svg` | 3505 | 検察庁 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3507.svg" width="28" height="28"> | `dm-3507.svg` | 3507 | 税務署 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3508.svg" width="28" height="28"> | `dm-3508.svg` | 3508 | 税関 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3509.svg" width="28" height="28"> | `dm-3509.svg` | 3509 | 郵便局 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3510.svg" width="28" height="28"> | `dm-3510.svg` | 3510 | 森林管理署 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3511.svg" width="28" height="28"> | `dm-3511.svg` | 3511 | 測候所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3512.svg" width="28" height="28"> | `dm-3512.svg` | 3512 | 地方整備局事務所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3513.svg" width="28" height="28"> | `dm-3513.svg` | 3513 | 出張所 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3514.svg" width="28" height="28"> | `dm-3514.svg` | 3514 | 警察署 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3515.svg" width="28" height="28"> | `dm-3515.svg` | 3515 | 交番・駐在所 | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-3516.svg" width="28" height="28"> | `dm-3516.svg` | 3516 | 消防署 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3517.svg" width="28" height="28"> | `dm-3517.svg` | 3517 | 職業安定所（ハローワーク） | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3518.svg" width="28" height="28"> | `dm-3518.svg` | 3518 | 土木事務所 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3519.svg" width="28" height="28"> | `dm-3519.svg` | 3519 | 役場支所及び出張所 | 標準図式 | 2026-08-11 |
 | <img src="../icons/dm-3521.svg" width="28" height="28"> | `dm-3521.svg` | 3521 | 神社 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3522.svg" width="28" height="28"> | `dm-3522.svg` | 3522 | 寺院 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3523.svg" width="28" height="28"> | `dm-3523.svg` | 3523 | キリスト教会 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3524.svg" width="28" height="28"> | `dm-3524.svg` | 3524 | 学校 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3525.svg" width="28" height="28"> | `dm-3525.svg` | 3525 | 幼稚園・保育園 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3526.svg" width="28" height="28"> | `dm-3526.svg` | 3526 | 公会堂・公民館 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3527.svg" width="28" height="28"> | `dm-3527.svg` | 3527 | 博物館 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3528.svg" width="28" height="28"> | `dm-3528.svg` | 3528 | 図書館 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3529.svg" width="28" height="28"> | `dm-3529.svg` | 3529 | 美術館 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3530.svg" width="28" height="28"> | `dm-3530.svg` | 3530 | 老人ホーム | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-3531.svg" width="28" height="28"> | `dm-3531.svg` | 3531 | 保健所 | 標準図式 | 2026-08-11 |
 | <img src="../icons/dm-3532.svg" width="28" height="28"> | `dm-3532.svg` | 3532 | 病院 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3534.svg" width="28" height="28"> | `dm-3534.svg` | 3534 | 銀行 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3536.svg" width="28" height="28"> | `dm-3536.svg` | 3536 | 協同組合 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3539.svg" width="28" height="28"> | `dm-3539.svg` | 3539 | デパート | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3545.svg" width="28" height="28"> | `dm-3545.svg` | 3545 | 倉庫 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-3546.svg" width="28" height="28"> | `dm-3546.svg` | 3546 | 火薬庫 | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-3548.svg" width="28" height="28"> | `dm-3548.svg` | 3548 | 工場 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3549.svg" width="28" height="28"> | `dm-3549.svg` | 3549 | 発電所 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3550.svg" width="28" height="28"> | `dm-3550.svg` | 3550 | 変電所 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3552.svg" width="28" height="28"> | `dm-3552.svg` | 3552 | 浄水場 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-3553.svg" width="28" height="28"> | `dm-3553.svg` | 3553 | 揚水機場 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3556.svg" width="28" height="28"> | `dm-3556.svg` | 3556 | 揚排水ポンプ場 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-3557.svg" width="28" height="28"> | `dm-3557.svg` | 3557 | 排水機場 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-3559.svg" width="28" height="28"> | `dm-3559.svg` | 3559 | 公衆便所 | 標準図式 | 2026-08-12 |
 | <img src="../icons/dm-3560.svg" width="28" height="28"> | `dm-3560.svg` | 3560 | ガソリンスタンド | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-4101.svg" width="28" height="28"> | `dm-4101.svg` | 4101 | マンホール（未分類） | 標準図式 | 2026-01-30 |

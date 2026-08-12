@@ -36,9 +36,22 @@ def bar(done, total, width=20):
     return '█' * n + '░' * (width - n)
 
 
+def load_icons():
+    """4桁コード -> アイコンファイル名の一覧。"""
+    icons = defaultdict(list)
+    for row in load(os.path.join(ROOT, 'data', 'icons.csv')):
+        code = row['4桁コード'].strip()
+        if code:
+            icons[code].append(row['ファイル名'])
+    return icons
+
+
 def main():
     rows = load(SYMBOLS)
     overrides = load(OVERRIDES, 'コード') if os.path.exists(OVERRIDES) else {}
+    icons = load_icons()
+    for r in rows:
+        r['アイコン'] = ' '.join(sorted(icons.get(r['コード'], [])))
 
     lines = [
         '# 点記号カバレッジ',
@@ -152,9 +165,8 @@ def main():
           f'未作成 {total_t - total_d}件）')
 
     # icons.csv 側に台帳と食い違うコードが無いかの検算
-    icons = load(os.path.join(ROOT, 'data', 'icons.csv'))
     known = {r['コード'] for r in rows}
-    unknown = sorted({r['4桁コード'] for r in icons
+    unknown = sorted({r['4桁コード'] for r in load(os.path.join(ROOT, 'data', 'icons.csv'))
                       if r['分類'] == '標準図式' and r['4桁コード'] not in known})
     if unknown:
         print(f'  標準図式とされているが台帳に無いコード: {" ".join(unknown)}')

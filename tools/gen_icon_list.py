@@ -31,6 +31,14 @@ def load_names():
     return names
 
 
+def _icon_codes():
+    """(4桁コード, ファイル名) の一覧。"""
+    path = os.path.join(ROOT, 'data', 'icons.csv')
+    with open(path, encoding='utf-8-sig', newline='') as fp:
+        return [(r['4桁コード'].strip(), r['ファイル名']) for r in csv.DictReader(fp)
+                if r['4桁コード'].strip()]
+
+
 def coverage_line():
     """図式の台帳（data/symbols.csv）と突き合わせた進捗を1行で返す。"""
     path = os.path.join(ROOT, 'data', 'symbols.csv')
@@ -38,8 +46,9 @@ def coverage_line():
         return None
     with open(path, encoding='utf-8-sig', newline='') as fp:
         rows = [r for r in csv.DictReader(fp) if r['図式区分'] == '標準図式']
+    have = {c for c, _ in _icon_codes()}
     target = [r for r in rows if r['アイコン対象']]
-    done = [r for r in target if r['アイコン']]
+    done = [r for r in target if r['コード'] in have]
     return (f'標準図式のカバレッジ: **{len(done)}/{len(target)}件**'
             f'（未作成 {len(target) - len(done)}件）。'
             f'内訳は [symbol-coverage.md](symbol-coverage.md) を参照。')
