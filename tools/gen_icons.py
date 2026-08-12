@@ -13,8 +13,8 @@
 #   （bbox 10〜22px・線幅 約1.1px・中心 (32,32)）に合わせる方針。
 # 読み取り手順と検証手順は docs/icon-authoring-guide.md を参照。
 #
-# 末尾は 2026-08 に追加した6コードの作図例。新しい記号を足すときは
-# 同じ書き方で write(...) を1行ずつ増やす。
+# 末尾は追加済みコードの作図例（2026-08 の標準図式6件、道路台帳向け8件）。
+# 新しい記号を足すときは同じ書き方で write(...) を1行ずつ増やす。
 # -----------------------------------------
 import math
 import os
@@ -126,6 +126,33 @@ def ring(cx, cy, r, w=W):
     return outer + inner
 
 
+def dot(cx, cy, r):
+    """半径rの塗りつぶし円。"""
+    return _bez_d(_arc_bez(cx, cy, r, 0, 2 * math.pi)) + 'Z'
+
+
+def rect_band(x0, y0, x1, y1, w=W):
+    """矩形の輪郭を太さwの帯にする。x0..x1,y0..y1 は輪郭の中心線。"""
+    h = w / 2
+    return (poly([(x0 - h, y0 - h), (x1 + h, y0 - h),
+                  (x1 + h, y1 + h), (x0 - h, y1 + h)]) +
+            poly([(x0 + h, y0 + h), (x0 + h, y1 - h),
+                  (x1 - h, y1 - h), (x1 - h, y0 + h)]))
+
+
+def round_rect_band(x0, y0, x1, y1, r, w=W):
+    """角丸矩形の輪郭を太さwの帯にする。角の円弧4本＋直線4本を突き合わせる。"""
+    q = math.pi / 2
+    d = ''
+    for cx, cy, a0 in ((x1 - r, y0 + r, -q), (x1 - r, y1 - r, 0),
+                       (x0 + r, y1 - r, q), (x0 + r, y0 + r, 2 * q)):
+        d += arc_band(cx, cy, r, a0, a0 + q, w)
+    return (d + seg((x0 + r, y0), (x1 - r, y0), w) +
+            seg((x0 + r, y1), (x1 - r, y1), w) +
+            seg((x0, y0 + r), (x0, y1 - r), w) +
+            seg((x1, y0 + r), (x1, y1 - r), w))
+
+
 # 字入り記号（○＋漢字など）に使う書体。SIL OFL なので MIT の本リポジトリに取り込める。
 FONT_CANDIDATES = [
     '/mnt/c/Windows/Fonts/NotoSansJP-VF.ttf',
@@ -135,19 +162,24 @@ FONT_CANDIDATES = [
 ]
 
 
-def glyph(ch, height, cx, cy, weight=400):
-    """Noto Sans JP（OFL）から1文字のアウトラインを取り出し、指定サイズ・中心に配置。"""
+def _font(weight):
     from fontTools.ttLib import TTFont
     from fontTools.varLib import instancer
-    from fontTools.pens.svgPathPen import SVGPathPen
-    from fontTools.pens.boundsPen import BoundsPen
-    from fontTools.pens.transformPen import TransformPen
 
     path = next((p for p in FONT_CANDIDATES if os.path.exists(p)), None)
     if path is None:
         raise FileNotFoundError(
             'Noto Sans JP が見つかりません。FONT_CANDIDATES にパスを追加してください。')
-    font = instancer.instantiateVariableFont(TTFont(path), {'wght': weight})
+    return instancer.instantiateVariableFont(TTFont(path), {'wght': weight})
+
+
+def glyph(ch, height, cx, cy, weight=400):
+    """Noto Sans JP（OFL）から1文字のアウトラインを取り出し、指定サイズ・中心に配置。"""
+    from fontTools.pens.svgPathPen import SVGPathPen
+    from fontTools.pens.boundsPen import BoundsPen
+    from fontTools.pens.transformPen import TransformPen
+
+    font = _font(weight)
     gs = font.getGlyphSet()
     gname = font.getBestCmap()[ord(ch)]
     bp = BoundsPen(gs)
@@ -160,6 +192,35 @@ def glyph(ch, height, cx, cy, weight=400):
     ty = cy + (y0 + y1) / 2 * sc
     pen = SVGPathPen(gs)
     gs[gname].draw(TransformPen(pen, (sc, 0, 0, -sc, tx, ty)))
+    return pen.getCommands()
+
+
+def text(s, height, cx, cy, weight=400, width=None):
+    """複数文字を字送りどおりに並べ、字面bboxの中心を(cx,cy)に合わせて1パスにする。
+    width を与えると横方向だけ拡縮して図式の縦横比に合わせる。"""
+    from fontTools.pens.svgPathPen import SVGPathPen
+    from fontTools.pens.boundsPen import BoundsPen
+    from fontTools.pens.transformPen import TransformPen
+
+    font = _font(weight)
+    gs = font.getGlyphSet()
+    cmap = font.getBestCmap()
+    names = [cmap[ord(ch)] for ch in s]
+    bp = BoundsPen(gs)
+    adv = 0.0
+    for g in names:                       # 字送りを積みながら全体の字面bboxを測る
+        gs[g].draw(TransformPen(bp, (1, 0, 0, 1, adv, 0)))
+        adv += gs[g].width
+    x0, y0, x1, y1 = bp.bounds
+    sy = height / (y1 - y0)
+    sx = width / (x1 - x0) if width else sy
+    tx = cx - (x0 + x1) / 2 * sx
+    ty = cy + (y0 + y1) / 2 * sy
+    pen = SVGPathPen(gs)
+    adv = 0.0
+    for g in names:
+        gs[g].draw(TransformPen(pen, (sx, 0, 0, -sy, tx + adv * sx, ty)))
+        adv += gs[g].width
     return pen.getCommands()
 
 
@@ -232,5 +293,120 @@ bar = w7212 * (0.5 / 1.5)
 d = (arc_band(CX, chord_y, r7212, 0, math.pi) +
      seg((CX - bar / 2, chord_y), (CX + bar / 2, chord_y)))
 write('7212', d, f'半円(幅14・深さ7px)＋弦中央の線分{bar:.2f}px')
+
+
+# =====================================================================
+# 2026-08 追加分。道路台帳平面図（地図情報レベル500）で使われるが
+# スプライトに無かったコードのうち、標準図式に記号定義があるもの8件。
+# ページ番号は「作業規程の準則 付録7 公共測量標準図式」（2025-03-06版）のもの。
+# 小物体系の実寸スケールは、既存のマンホール（極小φ2.0mm→18.56px）から
+# 約9.3px/mm と読める。以下はこれを目安にしつつ、10〜22pxのレンジに収める。
+# =====================================================================
+
+# ---- 22-21 バス停（点E5） --------------------------------------------
+# 図式(p.51): 円φ1.0の下に柱、全高2.0、下端に横棒1.0。
+# 全高 18.5px（=2.0mm × 9.25px/mm）とする。
+s = 9.25
+h2221, dia2221, bar2221 = 2.0 * s, 1.0 * s, 1.0 * s
+cy2221 = CY - h2221 / 2 + dia2221 / 2       # 円の中心
+ybar = CY + h2221 / 2 - W / 2               # 横棒の中心線
+d = (ring(CX, cy2221, (dia2221 - W) / 2) +
+     seg((CX, cy2221 + dia2221 / 2), (CX, ybar)) +
+     seg((CX - bar2221 / 2, ybar), (CX + bar2221 / 2, ybar)))
+write('2221', d, f'円φ{dia2221:.2f}＋柱・全高{h2221:.1f}px')
+
+# ---- 22-46 信号灯（方向E6） ------------------------------------------
+# 図式(p.53): 挿入点の小円φ0.5 ―連結線0.8― 角丸箱2.0×1.0（中に灯φ0.3を3つ）。
+# 方向レイヤなので水平右向きに作図する（図式もその向き）。
+# 全長3.3mmを26px（7.9px/mm）とする。角丸半径は図式実測で箱の高さの1/3。
+s = 7.9
+d0, lnk = 0.5 * s, 0.8 * s
+bw, bh = 2.0 * s, 1.0 * s
+xl = CX - (d0 + lnk + bw) / 2               # インクの左端
+bx0 = xl + d0 + lnk                         # 箱の左端（外形）
+d = (ring(xl + d0 / 2, CY, (d0 - W) / 2) +
+     seg((xl + d0, CY), (bx0, CY)) +
+     round_rect_band(bx0 + W / 2, CY - bh / 2 + W / 2,
+                     bx0 + bw - W / 2, CY + bh / 2 - W / 2, bh / 3 - W / 2))
+for i in (1, 2, 3):
+    d += dot(bx0 + bw * i / 4, CY, 0.3 * s / 2)
+write('2246', d, f'小円φ{d0:.2f}＋連結線＋角丸箱{bw:.1f}×{bh:.1f}px・灯3つ（右向き）')
+
+# ---- 22-61 電話ボックス（点E5） --------------------------------------
+# 図式(p.54): 円φ2.5の中に受話器。円の外径を22pxとする。
+# 受話器は図式を実測した比率で組む（弧の半径=外径の0.39、受話部の小円=外径の0.20、
+# 小円の中心は円心から (-0.19,-0.19) と (-0.13,+0.25)）。
+D = 22.0
+ra = 0.382 * D                              # 受話器の弧の半径
+p_up = (CX - 0.186 * D, CY - 0.185 * D)     # 受話部（上）
+p_lo = (CX - 0.128 * D, CY + 0.250 * D)     # 受話部（下）
+a0, a1 = math.radians(200), math.radians(470)   # 左側を開けて時計回りに270°
+d = (ring(CX, CY, (D - W) / 2) +
+     arc_band(CX, CY, ra, a0, a1) +
+     seg((CX + ra * math.cos(a0), CY + ra * math.sin(a0)), p_up) +
+     seg((CX + ra * math.cos(a1), CY + ra * math.sin(a1)), p_lo) +
+     ring(p_up[0], p_up[1], (0.20 * D - W) / 2) +
+     ring(p_lo[0], p_lo[1], (0.20 * D - W) / 2))
+write('2261', d, f'円 外径{D:.0f}px＋受話器（弧φ{ra * 2:.2f}・受話部φ{0.2 * D:.2f}）')
+
+# ---- 22-62 郵便ポスト（点E5） ----------------------------------------
+# 図式(p.54): 円φ2.5の中に投函口の横長矩形。2261と同径にする。
+# 投函口は図式実測で 幅=外径の0.57・高さ=0.20、中心は円心から上に外径の0.25。
+D = 22.0
+sw, sh = 0.57 * D, 0.20 * D
+sy = CY - 0.25 * D
+d = (ring(CX, CY, (D - W) / 2) +
+     rect_band(CX - sw / 2 + W / 2, sy - sh / 2 + W / 2,
+               CX + sw / 2 - W / 2, sy + sh / 2 - W / 2))
+write('2262', d, f'円 外径{D:.0f}px＋投函口{sw:.2f}×{sh:.2f}px')
+
+# ---- 35-59 公衆便所（点E5） ------------------------------------------
+# 図式(p.75): 文字「W.C」4.0×2.0mm（2500は3.0×1.5mm）。
+# 文字系の既存（7201「(土)」26×15、7211「(岩)」25×15）に合わせ 22×11px とする。
+# 素の字幅は縦横比 約2.8:1 なので、図式の 2:1 に合わせて横だけ詰める。
+# 詰めるぶん縦画が細るので、ウェイトは500（既存の線幅約1.1pxに合わせる）。
+d = text('W.C', 11.0, CX, CY, weight=500, width=22.0)
+write('3559', d, '「W.C」22×11px（Noto Sans JP 500 / OFL）')
+
+# ---- 41-32 電話柱（点E5＋方向E6） ------------------------------------
+# 図式(p.76): 円φ1.0の中に水平線＋架線2本。図式の点線は寸法の引き出し線なので
+# 記号には含めず、実線だけを採る。架線の角度は図式実測で 210.1°/344.3°
+# （画面座標・Y下向き・右が0°）、長さは円の縁から直径1.0ぶん。
+# 隣の41-19 有線柱は「円＋垂直線」、41-42 電力柱は「円のみ」で区別される。
+# 取得位置は柱の中心なので、円の中心をキャンバス中心 (32,32) に置く。
+# 大きさは小物体系の実寸スケール 9.3px/mm（マンホール極小φ2.0mm→18.56px）による。
+s = 9.3
+D4132 = 1.0 * s                              # 円の外径
+ARM = 1.0 * s                                # 架線の長さ（円の縁から）
+
+
+def haisen(dia, length, deg):
+    """円の縁から外へ伸びる架線1本。degは画面座標（Y下向き・右が0°）。"""
+    a = math.radians(deg)
+    return seg((CX + dia / 2 * math.cos(a), CY + dia / 2 * math.sin(a)),
+               (CX + (dia / 2 + length) * math.cos(a), CY + (dia / 2 + length) * math.sin(a)))
+
+
+d = (ring(CX, CY, (D4132 - W) / 2) +
+     seg((CX - (D4132 / 2 - W), CY), (CX + (D4132 / 2 - W), CY)) +
+     haisen(D4132, ARM, 210.1) + haisen(D4132, ARM, 344.3))
+write('4132', d, f'円 外径{D4132:.1f}px＋水平線＋架線2本(210.1°/344.3°)')
+
+# ---- 41-42 電力柱（点E5＋方向E6） ------------------------------------
+# 図式(p.77): 円φ1.0＋架線3本。実測で 30.3°/173.3°/323.9°、長さは4132と同じ。
+d = ring(CX, CY, (D4132 - W) / 2)
+for a in (30.3, 173.3, 323.9):
+    d += haisen(D4132, ARM, a)
+write('4142', d, f'円 外径{D4132:.1f}px＋架線3本(30.3°/173.3°/323.9°)')
+
+# ---- 73-06 公共基準点（多角点等）（点E5） ----------------------------
+# 図式(p.123): 三重の同心円。外径2.5mm・中1.5mm・内0.7mm（実測）、線0.3mm。
+# 既存の73-04 公共基準点（三角点）18.69pxに合わせ、外径18.5pxとする。
+# 73-03 多角点等（二重円 12.06px）とは輪の数で区別される。
+D = 18.5
+d = (ring(CX, CY, (D - W) / 2) +
+     ring(CX, CY, (D * 1.5 / 2.5 - W) / 2) +
+     ring(CX, CY, (D * 0.7 / 2.5 - W) / 2))
+write('7306', d, f'三重の同心円 外径{D:.1f}/{D * 0.6:.1f}/{D * 0.28:.2f}px')
 
 print(f'\n出力先: {OUT}')
