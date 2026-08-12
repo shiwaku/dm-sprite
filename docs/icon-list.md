@@ -2,14 +2,15 @@
 
 > `python3 tools/gen_icon_list.py` で生成。直接編集しない。
 
-収録数: **140件**
+収録数: **159件**
 
-標準図式のカバレッジ: **133/185件**（未作成 52件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
+標準図式のカバレッジ: **152/185件**（未作成 33件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
 
 ## 追加履歴
 
 | 追加日 | 件数 | コミット | 内容 | コード |
 |---|---:|---|---|---|
+| 2026-08-13 | 19 | `dee6799` | feat: 小物体（レイヤ42）の未作成アイコン19件を追加する | 4119 4206 4208 4211 4217 4223 4224 4225 4226 4227 4232 4233 4242 4245 4252 4253 4254 4255 4256 |
 | 2026-08-13 | 19 | `a91c117` | feat: 建物等（レイヤ35）の未作成アイコン19件を追加する | 3503 3504 3505 3507 3508 3511 3512 3513 3517 3518 3524 3527 3528 3529 3539 3549 3552 3553 3557 |
 | 2026-08-12 | 8 | `55e7386` | feat: 道路台帳平面図で使う標準図式アイコン8件を追加する | 2221 2246 2261 2262 3559 4132 4142 7306 |
 | 2026-08-11 | 6 | `a1482eb` | 不足していた標準図式アイコン6件を追加 | 2219 3519 3531 5227 6335 7212 |
@@ -81,6 +82,7 @@
 | <img src="../icons/dm-3560.svg" width="28" height="28"> | `dm-3560.svg` | 3560 | ガソリンスタンド | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-4101.svg" width="28" height="28"> | `dm-4101.svg` | 4101 | マンホール（未分類） | 標準図式 | 2026-01-30 |
 | <img src="../icons/dm-4111.svg" width="28" height="28"> | `dm-4111.svg` | 4111 | マンホール（共同溝） | 標準図式 | 2026-01-30 |
+| <img src="../icons/dm-4119.svg" width="28" height="28"> | `dm-4119.svg` | 4119 | 有線柱 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4121.svg" width="28" height="28"> | `dm-4121.svg` | 4121 | マンホール（ガス） | 標準図式 | 2026-01-30 |
 | <img src="../icons/dm-4131.svg" width="28" height="28"> | `dm-4131.svg` | 4131 | マンホール（電話） | 標準図式 | 2026-01-30 |
 | <img src="../icons/dm-4132.svg" width="28" height="28"> | `dm-4132.svg` | 4132 | 電話柱 | 標準図式 | 2026-08-12 |
@@ -93,14 +95,25 @@
 | <img src="../icons/dm-4203.svg" width="28" height="28"> | `dm-4203.svg` | 4203 | 立像 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-4204.svg" width="28" height="28"> | `dm-4204.svg` | 4204 | 路傍祠 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-4205.svg" width="28" height="28"> | `dm-4205.svg` | 4205 | 灯ろう | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-4206.svg" width="28" height="28"> | `dm-4206.svg` | 4206 | 狛犬 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4207.svg" width="28" height="28"> | `dm-4207.svg` | 4207 | 鳥居 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-4208.svg" width="28" height="28"> | `dm-4208.svg` | 4208 | 自然災害伝承碑 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4211.svg" width="28" height="28"> | `dm-4211.svg` | 4211 | 官民境界杭 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4215.svg" width="28" height="28"> | `dm-4215.svg` | 4215 | 消火栓 | 標準図式 | 2026-01-30 |
 | <img src="../icons/dm-4216.svg" width="28" height="28"> | `dm-4216.svg` | 4216 | 消火栓 立型 | 標準図式 | 2026-01-30 |
+| <img src="../icons/dm-4217.svg" width="28" height="28"> | `dm-4217.svg` | 4217 | 地下換気孔 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4219.svg" width="28" height="28"> | `dm-4219.svg` | 4219 | 坑口 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-4221.svg" width="28" height="28"> | `dm-4221.svg` | 4221 | 独立樹（広葉樹） | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-4222.svg" width="28" height="28"> | `dm-4222.svg` | 4222 | 独立樹（針葉樹） | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-4223.svg" width="28" height="28"> | `dm-4223.svg` | 4223 | 噴水 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4224.svg" width="28" height="28"> | `dm-4224.svg` | 4224 | 井戸 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4225.svg" width="28" height="28"> | `dm-4225.svg` | 4225 | 油井・ガス井 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4226.svg" width="28" height="28"> | `dm-4226.svg` | 4226 | 貯水槽 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4227.svg" width="28" height="28"> | `dm-4227.svg` | 4227 | 肥料槽 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4228.svg" width="28" height="28"> | `dm-4228.svg` | 4228 | 起重機 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-4231.svg" width="28" height="28"> | `dm-4231.svg` | 4231 | タンク | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-4232.svg" width="28" height="28"> | `dm-4232.svg` | 4232 | 給水塔 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4233.svg" width="28" height="28"> | `dm-4233.svg` | 4233 | 火の見 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4234.svg" width="28" height="28"> | `dm-4234.svg` | 4234 | 煙突 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-4235.svg" width="28" height="28"> | `dm-4235.svg` | 4235 | 高塔 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-4236.svg" width="28" height="28"> | `dm-4236.svg` | 4236 | 電波塔 | 標準図式 | 2026-01-27 |
@@ -108,8 +121,15 @@
 | <img src="../icons/dm-4238.svg" width="28" height="28"> | `dm-4238.svg` | 4238 | 防犯灯 | 標準図式 | 2026-01-30 |
 | <img src="../icons/dm-4239.svg" width="28" height="28"> | `dm-4239.svg` | 4239 | 風車 | 標準図式 | 2026-02-26 |
 | <img src="../icons/dm-4241.svg" width="28" height="28"> | `dm-4241.svg` | 4241 | 灯台 | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-4242.svg" width="28" height="28"> | `dm-4242.svg` | 4242 | 航空灯台 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4243.svg" width="28" height="28"> | `dm-4243.svg` | 4243 | 灯標 | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-4245.svg" width="28" height="28"> | `dm-4245.svg` | 4245 | ヘリポート | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-4251.svg" width="28" height="28"> | `dm-4251.svg` | 4251 | 水位観測所 | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-4252.svg" width="28" height="28"> | `dm-4252.svg` | 4252 | 流量観測所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4253.svg" width="28" height="28"> | `dm-4253.svg` | 4253 | 雨量観測所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4254.svg" width="28" height="28"> | `dm-4254.svg` | 4254 | 水質観測所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4255.svg" width="28" height="28"> | `dm-4255.svg` | 4255 | 波浪観測所 | 標準図式 | 2026-08-13 |
+| <img src="../icons/dm-4256.svg" width="28" height="28"> | `dm-4256.svg` | 4256 | 風向・風速観測所 | 標準図式 | 2026-08-13 |
 | <img src="../icons/dm-5105.svg" width="28" height="28"> | `dm-5105.svg` | 5105 | 湖池 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-5221.svg" width="28" height="28"> | `dm-5221.svg` | 5221 | 渡船発着所 | 標準図式 | 2026-02-26 |
 | <img src="../icons/dm-5226.svg" width="28" height="28"> | `dm-5226.svg` | 5226 | 滝 | 標準図式 | 2026-01-27 |
