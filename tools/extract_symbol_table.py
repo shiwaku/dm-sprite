@@ -294,7 +294,11 @@ def extract(pdf_path):
 
 
 def load_icons():
-    """4桁コード -> アイコンファイル名（複数ある場合は空白区切り）。"""
+    """4桁コード -> アイコンファイル名。ここでは進捗の表示にだけ使う。
+
+    どのコードにアイコンがあるかは icons.csv 側の情報なので、台帳には焼き込まず
+    docs/symbol-coverage.md の生成時に突き合わせる（そうしないとアイコンを足す
+    たびに図式PDFから再抽出しないと数字が動かない）。"""
     icons = defaultdict(list)
     path = os.path.join(ROOT, 'data', 'icons.csv')
     with open(path, encoding='utf-8-sig', newline='') as fp:
@@ -355,7 +359,6 @@ def main():
             'データタイプ': '/'.join(types),
             'アイコン対象': '○' if target else '',
             '対象の根拠': reason,
-            'アイコン': ' '.join(sorted(icons.get(code, []))),
             '取得方法': r['取得方法'],
             'PDFページ': r['PDFページ'],
         })
@@ -370,7 +373,7 @@ def main():
     for section in ('標準図式', '応用測量', '測量記録'):
         rs = [r for r in out_rows if r['図式区分'] == section]
         target = [r for r in rs if r['アイコン対象']]
-        done = [r for r in target if r['アイコン']]
+        done = [r for r in target if icons.get(r['コード'])]
         print(f'  {section}: {len(rs)}コード / アイコン対象 {len(target)}件 / '
               f'作成済み {len(done)}件 / 未作成 {len(target) - len(done)}件')
     bad = [k for k, v in dupes.items() if v > 1]
