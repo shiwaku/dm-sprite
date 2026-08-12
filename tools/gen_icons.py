@@ -18,6 +18,7 @@
 # -----------------------------------------
 import math
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -131,6 +132,37 @@ def dot(cx, cy, r):
     return _bez_d(_arc_bez(cx, cy, r, 0, 2 * math.pi)) + 'Z'
 
 
+def poly_band(pts, w=W):
+    """閉じた多角形の輪郭を太さwの帯にする。pts は輪郭の中心線（頂点は反復しない）。
+
+    polyline() で始点に戻ると始点だけ接合されずバットキャップが残り、その分だけ
+    形が非対称になる（三角形で中心が 0.3px ずれた）。全頂点をマイターで通すため、
+    外側・内側の多角形を作って ring() と同じく逆回りで抜く。"""
+    n = len(pts)
+
+    def offset(s):
+        out = []
+        for i in range(n):
+            p0, p1, p2 = pts[i - 1], pts[i], pts[(i + 1) % n]
+            n1 = _unit_normal(p0, p1)
+            n2 = _unit_normal(p1, p2)
+            k = 1 + n1[0] * n2[0] + n1[1] * n2[1]      # マイター長の係数
+            if abs(k) < 1e-9:
+                mx, my = n1
+            else:
+                mx, my = (n1[0] + n2[0]) / k, (n1[1] + n2[1]) / k
+            out.append((p1[0] + mx * w / 2 * s, p1[1] + my * w / 2 * s))
+        return out
+
+    return poly(offset(1)) + poly(list(reversed(offset(-1))))
+
+
+def _unit_normal(p0, p1):
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    L = math.hypot(dx, dy)
+    return (-dy / L, dx / L)
+
+
 def rect_band(x0, y0, x1, y1, w=W):
     """矩形の輪郭を太さwの帯にする。x0..x1,y0..y1 は輪郭の中心線。"""
     h = w / 2
@@ -195,6 +227,22 @@ def glyph(ch, height, cx, cy, weight=400):
     return pen.getCommands()
 
 
+def glyph_box(ch, size, cx, cy, weight=400):
+    """字面bboxの長辺を size に合わせて1文字を配置する。
+
+    glyph() は高さで揃えるので、「工」のような横長の字だと幅が出すぎて円から
+    はみ出す。縦長・正方形に近い字では glyph(height=size) と同じ結果になる。"""
+    from fontTools.pens.boundsPen import BoundsPen
+
+    font = _font(weight)
+    gs = font.getGlyphSet()
+    bp = BoundsPen(gs)
+    gs[font.getBestCmap()[ord(ch)]].draw(bp)
+    x0, y0, x1, y1 = bp.bounds
+    h = size if (y1 - y0) >= (x1 - x0) else size * (y1 - y0) / (x1 - x0)
+    return glyph(ch, h, cx, cy, weight)
+
+
 def text(s, height, cx, cy, weight=400, width=None):
     """複数文字を字送りどおりに並べ、字面bboxの中心を(cx,cy)に合わせて1パスにする。
     width を与えると横方向だけ拡縮して図式の縦横比に合わせる。"""
@@ -222,6 +270,30 @@ def text(s, height, cx, cy, weight=400, width=None):
         gs[g].draw(TransformPen(pen, (sx, 0, 0, -sy, tx + adv * sx, ty)))
         adv += gs[g].width
     return pen.getCommands()
+
+
+def ink_bbox(d):
+    """パスデータのインク外形 (x0, y0, x1, y1)。
+
+    ここのヘルパはどれも輪郭そのものを塗りパスとして出すので、座標の範囲が
+    そのままインクの範囲になる（ストローク幅を足す必要がない）。"""
+    v = [float(s) for s in re.findall(r'-?\d+(?:\.\d+)?', d)]
+    xs, ys = v[0::2], v[1::2]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def center_ink(d, cx=None, cy=None):
+    """インク外形の中心を (cx, cy) に合わせて平行移動する。
+
+    マイター接合は尖った頂点で外へ伸び、バットキャップは伸びないので、
+    寸法どおりに組んだだけでは中心が 0.5px ほどずれることがある。"""
+    cx = CX if cx is None else cx
+    cy = CY if cy is None else cy
+    x0, y0, x1, y1 = ink_bbox(d)
+    dx, dy = cx - (x0 + x1) / 2, cy - (y0 + y1) / 2
+    it = iter(range(10 ** 9))
+    return re.sub(r'-?\d+(?:\.\d+)?',
+                  lambda m: f(float(m.group(0)) + (dx if next(it) % 2 == 0 else dy)), d)
 
 
 def write(code, body, note):
@@ -408,5 +480,162 @@ d = (ring(CX, CY, (D - W) / 2) +
      ring(CX, CY, (D * 1.5 / 2.5 - W) / 2) +
      ring(CX, CY, (D * 0.7 / 2.5 - W) / 2))
 write('7306', d, f'三重の同心円 外径{D:.1f}/{D * 0.6:.1f}/{D * 0.28:.2f}px')
+
+# =====================================================================
+# 2026-08-13 追加分。建物等（レイヤ35）の未作成19件（#6 フェーズ2の第1弾）。
+#
+# 形は図式PDFのベクター描画から実測した。記号本体は線幅0.6pt、寸法の引出線は
+# 0.15pt（多くは破線）で描かれているので、0.6pt の要素だけを拾えば本体が取れる。
+# 以下のコメントの pt 値はその実測値。
+#
+# 大きさは docs/icon-authoring-guide.md の方針どおり mm 比の再現ではなく、
+# **図式実測の最大寸法がインク22pxになる倍率**に揃えた。円だけの記号なら
+# 外径22px＝既存の官公署系（3519/3525/3526/3536）と同径になる。
+# =====================================================================
+
+INK = 22.0            # インクの外形（既存の官公署系の円と同径）
+GLYPH = 16.2          # ○の中の字の大きさ。3531 保 と同じ
+
+
+def fit(w_pt, h_pt, ink=INK):
+    """図式実測(pt)の外形を、インクが ink px に収まる倍率に直す。
+
+    実測値はパスの中心線なので、両側に線幅の半分が乗る分を引いておく。"""
+    return (ink - W) / max(w_pt, h_pt)
+
+
+# ---- ○＋漢字の9件 ----------------------------------------------------
+# 図式(p.67〜74): いずれも円φ4.0mm（2500用は2.5mm）の中に漢字1文字。
+# 円は既存の3519/3531と同じ外径22px、字は3531 保と同じ16.2px。
+# 「工」のような横長の字は長辺で合わせて円からはみ出さないようにする。
+for code, ch, page in [('3512', '工', 67), ('3513', '出', 67), ('3517', '安', 68),
+                       ('3518', '土', 68), ('3527', '博', 71), ('3528', '図', 71),
+                       ('3529', '美', 71), ('3539', '百', 73), ('3552', '浄', 74)]:
+    d = ring(CX, CY, (INK - W) / 2) + glyph_box(ch, GLYPH, CX, CY, weight=400)
+    write(code, d, f'円22px＋「{ch}」{GLYPH}px（Noto Sans JP 400 / OFL・図式p{page}）')
+
+# ---- 35-03 官公署 ----------------------------------------------------
+# 図式(p.65): 円の上に短い軸、その左右に小円2つ。
+# 実測(pt): 円φ8.43 / 小円φ1.65（中心は円の中心から左右±4.35・上5.91）/
+#           軸2.44（円の上端から上へ）/ 全体 10.35×11.02。
+k = fit(10.35, 11.02)
+r_main, r_dot = 8.43 / 2 * k, 1.65 / 2 * k
+dx, dy = 4.35 * k, 5.91 * k
+stem = 2.44 * k
+cy = CY + 1.22 * k                                  # 全体の中心から円の中心へのずれ
+d = (ring(CX, cy, r_main - W / 2) +
+     ring(CX - dx, cy - dy, r_dot - W / 2) +
+     ring(CX + dx, cy - dy, r_dot - W / 2) +
+     seg((CX, cy - r_main), (CX, cy - r_main - stem)))
+write('3503', center_ink(d), f'円φ{r_main * 2:.1f}＋軸{stem:.1f}＋小円φ{r_dot * 2:.1f}px×2')
+
+# ---- 35-04 裁判所 / 35-05 検察庁 -------------------------------------
+# 図式(p.65): 三角形の下に短い支柱（立て札）。検察庁は三角形の中に横線2本が入り、
+# 高さを3等分する。実測(pt): 裁判所 底辺12.46・高さ8.79・支柱3.41、
+#                            検察庁 底辺12.33・高さ8.69・支柱3.38（横線は1/3と2/3）。
+def tatefuda(base_pt, h_pt, stem_pt, bands=1):
+    k = fit(base_pt, h_pt + stem_pt)
+    base, h, stem = base_pt * k, h_pt * k, stem_pt * k
+    y_base = CY + (h + stem) / 2 - stem                # 底辺の高さ
+    apex = (CX, y_base - h)
+    d = poly_band([(CX - base / 2, y_base), apex, (CX + base / 2, y_base)])
+    d += seg((CX, y_base), (CX, y_base + stem))
+    for i in range(1, bands):                          # 高さを bands 等分する横線
+        y = y_base - h * i / bands
+        w = base * (bands - i) / bands                 # 相似で決まる弦の長さ
+        d += seg((CX - w / 2, y), (CX + w / 2, y))
+    return d, base, h, stem
+
+
+d, base, h, stem = tatefuda(12.46, 8.79, 3.41)
+write('3504', center_ink(d), f'三角形{base:.1f}×{h:.1f}＋支柱{stem:.1f}px')
+d, base, h, stem = tatefuda(12.33, 8.69, 3.38, bands=3)
+write('3505', center_ink(d), f'三角形{base:.1f}×{h:.1f}＋支柱{stem:.1f}px・横線2本（3等分）')
+
+# ---- 35-07 税務署 ----------------------------------------------------
+# 図式(p.66): そろばんの玉。菱形の上下に軸が出る。
+# 実測(pt): 菱形 12.40×7.36 / 軸 上2.45・下2.46 / 全体 12.40×12.27。
+k = fit(12.40, 12.27)
+dw, dh, ax = 12.40 * k, 7.36 * k, 2.45 * k
+d = (poly_band([(CX, CY - dh / 2), (CX + dw / 2, CY), (CX, CY + dh / 2),
+                (CX - dw / 2, CY)]) +
+     seg((CX, CY - dh / 2), (CX, CY - dh / 2 - ax)) +
+     seg((CX, CY + dh / 2), (CX, CY + dh / 2 + ax)))
+write('3507', center_ink(d), f'菱形{dw:.1f}×{dh:.1f}＋上下の軸{ax:.1f}px')
+
+# ---- 35-08 税関 / 35-11 測候所 ---------------------------------------
+# 図式(p.66/67): 横棒＋中央の縦棒。税関は棒の内側に短い下向きの爪が2つ、
+# 測候所は棒の両端に棒をまたぐ縦の爪が付く。
+# 実測(pt): 税関  横棒12.29・縦棒11.85・爪1.30（下向き・端から1.62内側）
+#           測候所 横棒12.39・縦棒12.36・爪2.57（両端・棒の上下に均等）
+k = fit(12.29, 11.95)
+bar, post, claw, inset = 12.29 * k, 11.85 * k, 1.30 * k, 1.62 * k
+ytop = CY - 11.95 * k / 2
+d = seg((CX - bar / 2, ytop), (CX + bar / 2, ytop)) + seg((CX, ytop), (CX, ytop + post))
+for sx in (-1, 1):
+    x = CX + sx * (bar / 2 - inset)
+    d += seg((x, ytop), (x, ytop + claw))
+write('3508', center_ink(d), f'横棒{bar:.1f}＋縦棒{post:.1f}＋下向きの爪{claw:.1f}px×2')
+
+k = fit(12.64, 13.61)
+bar, post, claw = 12.39 * k, 12.36 * k, 2.57 * k
+ytop = CY - 13.61 * k / 2 + claw / 2                  # 爪が棒の上へ出る分だけ下げる
+d = seg((CX - bar / 2, ytop), (CX + bar / 2, ytop)) + seg((CX, ytop), (CX, ytop + post))
+for sx in (-1, 1):
+    x = CX + sx * bar / 2
+    d += seg((x, ytop - claw / 2), (x, ytop + claw / 2))
+write('3511', center_ink(d), f'横棒{bar:.1f}＋縦棒{post:.1f}＋両端の爪{claw:.1f}px')
+
+# ---- 35-24 学校 ------------------------------------------------------
+# 図式(p.70): 「文」を直線で構図したもの。横棒の上に短い突起、下に交差する2本。
+# 実測(pt): 横棒13.80 / 突起1.79（上へ）/ 斜線は横棒上の±4.14から下12.11の∓5.80へ。
+k = fit(13.80, 13.71)
+bar, tick = 13.80 * k, 1.79 * k
+xin, xout, drop = 4.14 * k, 5.80 * k, 11.92 * k
+ybar = CY - 13.71 * k / 2 + tick
+d = (seg((CX - bar / 2, ybar), (CX + bar / 2, ybar)) +
+     seg((CX, ybar), (CX, ybar - tick)) +
+     seg((CX - xin, ybar), (CX + xout, ybar + drop)) +
+     seg((CX + xin, ybar), (CX - xout, ybar + drop)))
+write('3524', center_ink(d), f'「文」横棒{bar:.1f}＋突起{tick:.1f}＋交差2本（図式の直線構図）')
+
+# ---- 35-49 発電所 ----------------------------------------------------
+# 図式(p.74): 円から8方向に光。実測(pt) 円φ8.28、光は円の縁(r4.2)から
+# 縦・斜めが r7.2、左右だけ r7.86 まで伸びる（全体 15.72×13.84）。
+k = fit(15.72, 13.84)
+r_in, r_v, r_h = 4.2 * k, 7.2 * k, 7.86 * k
+d = ring(CX, CY, 8.28 / 2 * k - W / 2)
+for i in range(8):
+    a = math.radians(45 * i)
+    r_out = r_h if i in (0, 4) else r_v               # 左右だけ長い
+    d += seg((CX + r_in * math.cos(a), CY + r_in * math.sin(a)),
+             (CX + r_out * math.cos(a), CY + r_out * math.sin(a)))
+write('3549', center_ink(d), f'円φ{8.28 * k:.1f}＋光8本（左右{r_h:.1f}・他{r_v:.1f}px）')
+
+# ---- 35-53 揚水機場 / 35-57 排水機場 ---------------------------------
+# 図式(p.74/75): 台座線の上に半円（ドーム）、そこから3方向（上・左右斜め）に光。
+# 排水機場はドームの中に横線2本が入り、高さを3等分する。ここだけが両者の違い。
+# 実測(pt): 台座16.56 / ドーム r5.6・高さ5.7 / 光は縁から r8.2 まで / 全体16.56×8.14。
+def kikaba(bands=1):
+    k = fit(16.56, 8.14)
+    base, r, r_out = 16.56 * k, 5.6 * k, 8.2 * k
+    ybase = CY + 8.14 * k / 2
+    d = (seg((CX - base / 2, ybase), (CX + base / 2, ybase)) +
+         arc_band(CX, ybase, r, math.pi, 2 * math.pi))
+    for deg in (225, 270, 315):
+        a = math.radians(deg)
+        d += seg((CX + r * math.cos(a), ybase + r * math.sin(a)),
+                 (CX + r_out * math.cos(a), ybase + r_out * math.sin(a)))
+    for i in range(1, bands):                          # ドームを bands 等分する弦
+        y = r * i / bands
+        half = math.sqrt(max(r * r - y * y, 0))
+        d += seg((CX - half, ybase - y), (CX + half, ybase - y))
+    return d, base, r, r_out
+
+
+d, base, r, r_out = kikaba()
+write('3553', center_ink(d), f'台座{base:.1f}＋半円r{r:.1f}＋光3本（r{r_out:.1f}px）')
+d, base, r, r_out = kikaba(bands=3)
+write('3557', center_ink(d), f'台座{base:.1f}＋半円r{r:.1f}＋光3本＋弦2本（3等分・3553との違い）')
 
 print(f'\n出力先: {OUT}')
