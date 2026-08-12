@@ -4,3 +4,4 @@ _site/sprite.png
 _site/sprite@2x.json
 _site/sprite@2x.png
 tools/out_icons
+__pycache__
