@@ -32,8 +32,11 @@ def load_names():
 
 
 def added_info(fname):
-    """そのファイルが追加されたコミットの日付・ハッシュ・件名を返す。"""
-    out = git('log', '--diff-filter=A', '--follow', '--date=short',
+    """そのファイルが追加されたコミットの日付・ハッシュ・件名を返す。
+    改名（0296aa9 でアイコンを一斉リネームしている）を辿るため --follow を使うが、
+    既定の類似度判定だと無関係なアイコンからの改名と誤検出して追加日がずれるので、
+    -M100%（内容が完全一致する改名だけを辿る）を付ける。"""
+    out = git('log', '--diff-filter=A', '--follow', '-M100%', '--date=short',
               '--format=%ad\t%h\t%s', '-1', '--', f'icons/{fname}')
     if not out:
         return ('-', '-', '')
