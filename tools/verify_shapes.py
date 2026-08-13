@@ -37,8 +37,11 @@ import extract_symbol_table as E  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PDF_URL = 'https://www.gsi.go.jp/common/000258741.pdf'
 
-# 記号本体に使われている線幅。寸法の引出線は 0.15pt、矢印と数字は塗り（幅0）。
-BODY_WIDTHS = (0.43, 0.45, 0.6, 0.9)
+# 記号本体に使われている線幅。大分類ごとに違う（建物等0.6・小物体0.45・
+# 土地利用等0.3・波浪観測所だけ0.9）。寸法の引出線は 0.15pt、矢印と数字は塗り（幅0）
+# なので、0.3pt 以上の線幅を持つ描画だけを本体とみなす。塗りつぶしの図形は
+# 幅を持つ 'fs'（塗り＋線）で描かれているのでこの条件で拾える。
+BODY_WIDTHS = (0.3, 0.43, 0.45, 0.6, 0.9)
 SIZE = 256          # 正規化後の長辺（px）
 TOL = 3             # 膨張の半径（px）。線幅の違いを吸収する
 ASPECT_NG = 5.0     # 比率差(%)のしきい値
@@ -108,6 +111,7 @@ def body_items(doc, cell, code):
         lw = round(grp.get('width') or 0, 2)
         if lw not in BODY_WIDTHS:
             continue
+        filled = 'f' in (grp.get('type') or '')
         for t in grp['items']:
             pts = [t[1].tl, t[1].br] if t[0] == 're' else [p for p in t[1:] if hasattr(p, 'x')]
             if not pts:
@@ -115,7 +119,7 @@ def body_items(doc, cell, code):
             if not all(cell['zu'][0] <= p.x <= cell['zu'][1]
                        and cell['y0'] <= p.y <= cell['y1'] for p in pts):
                 continue
-            got.append((t[0], lw, [(round(p.x, 2), round(p.y, 2)) for p in pts]))
+            got.append((t[0], lw, [(round(p.x, 2), round(p.y, 2)) for p in pts], filled))
     drop = EXCLUDE.get(code)
     if drop:
         got = [it for it in got if not drop(it)]
@@ -140,13 +144,14 @@ def first_variant(items, gap=6.0):
 
 def truth_raster(items, zoom=12):
     """記号本体だけを引き直したラスタ。"""
-    xs = [p[0] for _, _, pts in items for p in pts]
-    ys = [p[1] for _, _, pts in items for p in pts]
+    xs = [p[0] for it in items for p in it[2]]
+    ys = [p[1] for it in items for p in it[2]]
     x0, y0, pad = min(xs), min(ys), 2.0
     doc = fitz.open()
     page = doc.new_page(width=max(xs) - x0 + 2 * pad, height=max(ys) - y0 + 2 * pad)
     shape = page.new_shape()
-    for op, lw, pts in items:
+    for op, lw, pts, *rest in items:
+        filled = bool(rest[0]) if rest else False
         p = [(x - x0 + pad, y - y0 + pad) for x, y in pts]
         if op == 'l':
             shape.draw_line(fitz.Point(*p[0]), fitz.Point(*p[-1]))
@@ -155,7 +160,8 @@ def truth_raster(items, zoom=12):
         elif op == 're':
             shape.draw_rect(fitz.Rect(p[0][0], p[0][1], p[1][0], p[1][1]))
         # closePath の既定は True。円弧の各セグメントに弦が引かれるので切る
-        shape.finish(width=lw, color=(0, 0, 0), fill=None, closePath=False)
+        shape.finish(width=lw, color=(0, 0, 0),
+                     fill=(0, 0, 0) if filled else None, closePath=False)
     shape.commit()
     pm = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
     return Image.open(io.BytesIO(pm.tobytes('png'))).convert('L')
