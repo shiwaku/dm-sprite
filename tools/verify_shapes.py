@@ -1,9 +1,21 @@
 # -----------------------------------------
-# アイコンの形が図式と一致しているかを機械的に照合する。
+# アイコンの形が図式と一致しているかを機械的に判定する。**図式PDFは要らない。**
 #
-#   python3 tools/verify_shapes.py <図式PDF>              # 標準図式の全アイコン
-#   python3 tools/verify_shapes.py <図式PDF> 3504 4119    # 指定コードだけ
-#   python3 tools/verify_shapes.py <図式PDF> --overlay out.png
+#   python3 tools/verify_shapes.py                    # 全件の数値を出す
+#   python3 tools/verify_shapes.py 3504 4119          # 指定コードだけ
+#   python3 tools/verify_shapes.py --overlay out.png  # 重ね合わせ画像も出す
+#   python3 tools/verify_shapes.py --check            # 基準値と突き合わせ、外れたら終了コード1
+#   python3 tools/verify_shapes.py --write-baseline   # 基準値を書き直す
+#
+# 基準形状は data/zushiki-geometry.json（図式PDFから抜いてリポジトリに置いたもの。
+# 作り直すのは tools/dump_zushiki_geometry.py）。判定の基準値は data/shape-baseline.csv。
+#
+#   図式PDF → [抽出・目視レビュー] → data/zushiki-geometry.json
+#                                        ↓ 毎回の自動判定（PDF不要・CIで実行）
+#                                    icons/*.svg
+#
+# **保証できるのは「アイコンが基準形状と一致していること」まで。** 基準形状そのものが
+# 図式の正しい読み取りかは、JSON をコミットする時点の目視レビューで担保する。
 #
 # 基準画像は「図式PDFの描画コマンドのうち記号本体の線幅のものだけを引き直したもの」。
 # 寸法の引出線（0.15pt・多くは破線）・矢印・数字（塗り）は入らない。どんな形かの
@@ -22,6 +34,7 @@
 # -----------------------------------------
 import csv
 import io
+import json
 import math
 import os
 import re
@@ -51,7 +64,17 @@ COVER_NG = 85.0     # 覆い率(%)のしきい値
 GLYPH_CODES = {'3512', '3513', '3517', '3518', '3527', '3528', '3529', '3531', '3539',
                '3552', '3559', '4224', '4226', '4227', '4245', '7201', '7211'}
 
+# gen_icons.py の trace() で図式の座標をそのまま写した記号。**この判定は自己参照**
+# （同じ座標を基準に比べるので必ず一致する）。独立の根拠にはならないので、
+# 図式画像と並べた目視レビューの結果を data/shape-baseline.csv の根拠欄に残す。
+TRACED = {'6221', '6223', '6316'}
+
 # 図式には描かれているが点アイコンには入れない要素。作図時の判断をここに残す。
+EXCLUDE_REASON = {
+    '4217': '真形の外枠は記号ではないので除外（点アイコンは極小記号を採る）',
+    '4242': '上の箱の外側の縦線2本は2.6mmの寸法を示す補助線なので除外',
+}
+
 EXCLUDE = {
     # 真形（実際の外形）の外枠。点アイコンには極小記号だけを採る
     '4217': lambda it: it[0] == 're' and it[2][1][0] - it[2][0][0] > 15,
@@ -205,69 +228,168 @@ def targets(only):
     return [t for t in out if not only or t[0] in only]
 
 
+GEOMETRY = os.path.join(ROOT, 'data', 'zushiki-geometry.json')
+BASELINE = os.path.join(ROOT, 'data', 'shape-baseline.csv')
+# 基準値からのずれの許容。作図を変えれば必ずこれを超えるので、基準値の差分が
+# レビューに出る（=形を黙って変えられない）。
+TOL_ASPECT, TOL_COVER = 0.5, 1.0
+
+
+def load_geometry():
+    if not os.path.exists(GEOMETRY):
+        sys.exit(f'{GEOMETRY} がありません。\n'
+                 f'  python3 tools/dump_zushiki_geometry.py <図式PDF> で作ってください')
+    with open(GEOMETRY, encoding='utf-8') as fp:
+        return json.load(fp)
+
+
+def override_codes():
+    """図式のデータタイプ以外（実データなど）を根拠にアイコン対象にしたコード。
+
+    図式に点記号の定義が無いので、図式との形の照合はできない（意匠の根拠が図面側）。"""
+    path = os.path.join(ROOT, 'data', 'symbols-overrides.csv')
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding='utf-8-sig', newline='') as fp:
+        return {r['コード']: r.get('理由', '') for r in csv.DictReader(fp)}
+
+
+def verdict(code, items, aspect, i2t, t2i):
+    """判定の区分と、数値で見るべきかを返す。"""
+    ov = override_codes()
+    if code in ov and '実データ' in ov[code] or code in ov and '図式のデータタイプは' in ov[code]:
+        return '図式外', '図式に点記号の定義が無く、意匠の根拠は図面の実測'
+    if not items:
+        return '検証不可', '図式が塗りだけで描かれていて基準形状が取れない'
+    if code in TRACED:
+        return '座標写し', '図式の座標を写したので自己参照。目視レビュー済み'
+    if code in GLYPH_CODES:
+        return '字入り', '字形は書体差（図式の書体ではなく Noto Sans JP）'
+    if code in EXCLUDE:
+        return '判断あり', EXCLUDE_REASON.get(code, '図式の一部を除外')
+    if aspect is None:
+        return '測定不可', ''
+    if aspect <= ASPECT_NG and min(i2t, t2i) >= COVER_NG:
+        return '一致', ''
+    return '要確認', ''
+
+
+def measure(code, fname, geom):
+    entry = geom.get(code)
+    if entry is None:
+        return None
+    items = [(it['op'], it['w'], [tuple(p) for p in it['pts']], it.get('fill', False))
+             for it in entry['items']]
+    if not items:
+        return dict(code=code, name=entry['name'], items=[], aspect=None,
+                    i2t=None, t2i=None, truth=None, icon=None)
+    truth, tsz = normalize(truth_raster(items))
+    icon, isz = normalize(icon_raster(fname))
+    if truth is None or icon is None:
+        return dict(code=code, name=entry['name'], items=items, aspect=None,
+                    i2t=None, t2i=None, truth=None, icon=None)
+    ta, ia = tsz[0] / tsz[1], isz[0] / isz[1]
+    return dict(code=code, name=entry['name'], items=items,
+                aspect=abs(ta - ia) / ta * 100,
+                i2t=coverage(icon, truth), t2i=coverage(truth, icon),
+                truth=truth, icon=icon)
+
+
+def load_baseline():
+    if not os.path.exists(BASELINE):
+        return {}
+    with open(BASELINE, encoding='utf-8-sig', newline='') as fp:
+        return {r['コード']: r for r in csv.DictReader(fp)}
+
+
+def write_baseline(rows):
+    cols = ['コード', '名称', '判定', '比率差', 'アイコン→図式', '図式→アイコン', '根拠']
+    with open(BASELINE, 'w', encoding='utf-8', newline='') as fp:
+        w = csv.writer(fp, lineterminator='\n')
+        w.writerow(cols)
+        for r in rows:
+            v, why = r['verdict']
+            num = (lambda x: '' if x is None else f'{x:.1f}')
+            w.writerow([r['code'], r['name'], v, num(r['aspect']),
+                        num(r['i2t']), num(r['t2i']), why])
+    print(f'{BASELINE} を書き出しました（{len(rows)}件）')
+
+
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    args = sys.argv[1:]
     overlay_path = None
-    for i, a in enumerate(sys.argv):
-        if a == '--overlay' and i + 1 < len(sys.argv):
-            overlay_path = sys.argv[i + 1]
-            args = [x for x in args if x != overlay_path]
-    if not args:
-        sys.exit(f'使い方: python3 tools/verify_shapes.py <図式PDF> [コード...] '
-                 f'[--overlay out.png]\n  PDF: {PDF_URL}')
-    pdf, only = args[0], set(args[1:])
-    if not os.path.exists(pdf):
-        sys.exit(f'PDF が見つかりません: {pdf}\n  取得元: {PDF_URL}')
+    if '--overlay' in args:
+        i = args.index('--overlay')
+        overlay_path = args[i + 1]
+        del args[i:i + 2]
+    do_check = '--check' in args
+    do_write = '--write-baseline' in args
+    only = {a for a in args if not a.startswith('--')}
 
-    todo = targets(only)
-    doc = fitz.open(pdf)
-    cells = find_cells(doc, {c for c, _ in todo})
-
+    geom = load_geometry()
     rows, tiles = [], []
-    for code, fname in todo:
-        cell = cells.get(code)
-        if cell is None:
-            rows.append((code, '', None, None, None, '図式欄が見つからない'))
+    for code, fname in targets(only):
+        m = measure(code, fname, geom)
+        if m is None:
+            rows.append(dict(code=code, name='', aspect=None, i2t=None, t2i=None,
+                             verdict=('基準なし', 'data/zushiki-geometry.json に無い')))
             continue
-        items = body_items(doc, cell, code)
-        if not items:
-            rows.append((code, cell['name'], None, None, None, '本体の描画が取れない'))
-            continue
-        truth, tsz = normalize(truth_raster(items))
-        icon, isz = normalize(icon_raster(fname))
-        if truth is None or icon is None:
-            rows.append((code, cell['name'], None, None, None, 'ラスタ化できない'))
-            continue
-        ta, ia = tsz[0] / tsz[1], isz[0] / isz[1]
-        aspect = abs(ta - ia) / ta * 100
-        i2t, t2i = coverage(icon, truth), coverage(truth, icon)
-        note = ''
-        if code in GLYPH_CODES:
-            note = '字入り（字形は書体差）'
-        elif aspect > ASPECT_NG or min(i2t, t2i) < COVER_NG:
-            note = '要確認'
-        if code in EXCLUDE:
-            note = (note + ' / 図式の一部を除外' if note else '図式の一部を除外')
-        rows.append((code, cell['name'], aspect, i2t, t2i, note))
-        tiles.append((code, cell['name'], truth, icon, aspect, i2t, t2i))
+        m['verdict'] = verdict(code, m['items'], m['aspect'], m['i2t'], m['t2i'])
+        rows.append(m)
+        if m['truth'] is not None:
+            tiles.append((code, m['name'], m['truth'], m['icon'],
+                          m['aspect'], m['i2t'], m['t2i']))
 
-    print(f'{"コード":6}{"名称":18}{"比率差":>8}{"ア→図":>8}{"図→ア":>8}  備考')
-    for code, name, aspect, i2t, t2i, note in rows:
-        if aspect is None:
-            print(f'{code:6}{name[:16]:18}{"—":>8}{"—":>8}{"—":>8}  {note}')
-        else:
-            print(f'{code:6}{name[:16]:18}{aspect:7.1f}%{i2t:7.1f}%{t2i:7.1f}%  {note}')
+    print(f'{"コード":6}{"名称":18}{"比率差":>8}{"ア→図":>8}{"図→ア":>8}  判定')
+    for r in rows:
+        num = (lambda x: f'{x:7.1f}%' if x is not None else f'{"—":>8}')
+        print(f'{r["code"]:6}{r["name"][:16]:18}{num(r["aspect"])}{num(r["i2t"])}'
+              f'{num(r["t2i"])}  {r["verdict"][0]}'
+              + (f' — {r["verdict"][1]}' if r['verdict'][1] else ''))
 
-    ok = [r for r in rows if r[2] is not None and not r[5]]
-    ng = [r for r in rows if r[5] == '要確認']
-    print(f'\n照合 {len([r for r in rows if r[2] is not None])}件 / '
-          f'基準を満たす {len(ok)}件 / 要確認 {len(ng)}件 / '
-          f'字入り {len([r for r in rows if r[5] and "字入り" in r[5]])}件')
-    if ng:
-        print('要確認:', ' '.join(r[0] for r in ng))
+    from collections import Counter
+    tally = Counter(r['verdict'][0] for r in rows)
+    print('\n' + ' / '.join(f'{k} {v}件' for k, v in sorted(tally.items())))
 
+    if do_write:
+        write_baseline(rows)
     if overlay_path and tiles:
         write_overlay(tiles, overlay_path)
+
+    if do_check:
+        base = load_baseline()
+        if not base:
+            sys.exit(f'{BASELINE} がありません。--write-baseline で作ってください')
+        bad = []
+        for r in rows:
+            b = base.get(r['code'])
+            if b is None:
+                bad.append(f'{r["code"]} は基準値に無い（--write-baseline で記録する）')
+                continue
+            if b['判定'] != r['verdict'][0]:
+                bad.append(f'{r["code"]} 判定が変わった: {b["判定"]} → {r["verdict"][0]}')
+            for key, col, tol in (('aspect', '比率差', TOL_ASPECT),
+                                  ('i2t', 'アイコン→図式', TOL_COVER),
+                                  ('t2i', '図式→アイコン', TOL_COVER)):
+                want, got = b[col].strip(), r[key]
+                if not want and got is None:
+                    continue
+                if not want or got is None:
+                    bad.append(f'{r["code"]} {col} の有無が変わった')
+                    continue
+                if abs(float(want) - got) > tol:
+                    bad.append(f'{r["code"]} {col} が {want}% → {got:.1f}% に変わった')
+        extra = sorted(set(base) - {r['code'] for r in rows})
+        for code in extra:
+            bad.append(f'{code} は基準値にあるがアイコンが無い')
+        if bad:
+            print('\n基準値と合いません:')
+            for b in bad:
+                print('  -', b)
+            print('\n形を変えたのであれば --write-baseline で基準値を更新し、'
+                  '差分をレビューに出してください。')
+            sys.exit(1)
+        print('\n基準値と一致しました。')
 
 
 def write_overlay(tiles, path):
