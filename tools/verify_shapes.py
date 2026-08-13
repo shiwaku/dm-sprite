@@ -57,7 +57,15 @@ PDF_URL = 'https://www.gsi.go.jp/common/000258741.pdf'
 BODY_WIDTHS = (0.3, 0.43, 0.45, 0.6, 0.9)
 SIZE = 256          # 正規化後の長辺（px）
 TOL = 3             # 膨張の半径（px）。線幅の違いを吸収する
-ASPECT_NG = 5.0     # 比率差(%)のしきい値
+ICON_STROKE = 1.1   # アイコンの線幅(px)。gen_icons.py の W と同じ
+# 判定のしきい値。
+# 比率差を10%にしているのは、図式が三角形などを「3本の別々の線」で描くのに対し、
+# こちらは頂点の欠けを避けるためマイター接合する方針（polyline/poly_band）で、
+# 尖った角では意図的にインクが外へ伸びるため。線幅の相対差は truth_raster の
+# stroke で揃えているので、残るのはこの接合の違いと丸めの誤差。
+# 覆い率のほうが要素の欠け・余分に敏感なので、こちらは85%を維持する
+# （41-19 有線柱の架線の誤りは覆い率58.8%で出た）。
+ASPECT_NG = 10.0    # 比率差(%)のしきい値
 COVER_NG = 85.0     # 覆い率(%)のしきい値
 
 # ○＋文字のコード。字形は書体が違うので覆い率は一致しない（円の比率だけが見どころ）。
@@ -73,6 +81,17 @@ TRACED = {'6221', '6223', '6316'}
 EXCLUDE_REASON = {
     '4217': '真形の外枠は記号ではないので除外（点アイコンは極小記号を採る）',
     '4242': '上の箱の外側の縦線2本は2.6mmの寸法を示す補助線なので除外',
+    '3508': '下の0.45ptの横線は2500用の変種の上辺（500用は0.6pt）。変種の間隔が'
+            '0.62ptしかなく同じ塊として拾われるので除外',
+}
+
+# 数値が基準を外れているが、図式と並べて目視で確認し、理由が説明できるもの。
+# 基準値には「確認済」として理由つきで残す（数値は基準値で固定されるので、
+# ここに入れても形を黙って変えることはできない）。
+REVIEWED = {
+    '4253': '図式の実測値をインク外形として扱っているため、図式の描画（中心線＋線幅）'
+            'より線幅の半分ぶん小さい。二重円の位置と貫く横線は一致している',
+    '4256': '4253 と同じ理由（二重円が線幅の半分ぶん小さい）。貫く斜線は一致している',
 }
 
 EXCLUDE = {
@@ -81,6 +100,7 @@ EXCLUDE = {
     # 上の箱の外側にある縦線2本。2.6mm の寸法を示す補助線で、記号ではない
     '4242': lambda it: (it[0] == 'l' and abs(it[2][-1][0] - it[2][0][0]) < 0.1
                         and abs(it[2][-1][1] - it[2][0][1]) > 4.5),
+    '3508': lambda it: it[1] < 0.5,
 }
 
 
@@ -134,7 +154,10 @@ def body_items(doc, cell, code):
         lw = round(grp.get('width') or 0, 2)
         if lw not in BODY_WIDTHS:
             continue
-        filled = 'f' in (grp.get('type') or '')
+        # 塗りの色を見る。図式の 'fs'（塗り＋線）はほぼ白塗り＋黒線で、
+        # 白塗りは下の線を隠すためのものなので、黒く塗ると別形状になってしまう。
+        fill = grp.get('fill')
+        filled = bool(fill) and (sum(fill) / len(fill)) < 0.5
         for t in grp['items']:
             pts = [t[1].tl, t[1].br] if t[0] == 're' else [p for p in t[1:] if hasattr(p, 'x')]
             if not pts:
@@ -165,8 +188,12 @@ def first_variant(items, gap=6.0):
     return merged[0][2]
 
 
-def truth_raster(items, zoom=12):
-    """記号本体だけを引き直したラスタ。"""
+def truth_raster(items, zoom=12, stroke=None):
+    """記号本体だけを引き直したラスタ。
+
+    stroke を与えるとその線幅（pt）で引く。線幅は設計方針で図式と意図的に違うため、
+    アイコン側と同じ「図形の大きさに対する線幅の比」に揃えてから比べると、
+    形の違いだけを見られる（尖った頂点のマイターの伸び方が揃う）。"""
     xs = [p[0] for it in items for p in it[2]]
     ys = [p[1] for it in items for p in it[2]]
     x0, y0, pad = min(xs), min(ys), 2.0
@@ -175,6 +202,7 @@ def truth_raster(items, zoom=12):
     shape = page.new_shape()
     for op, lw, pts, *rest in items:
         filled = bool(rest[0]) if rest else False
+        lw = stroke if stroke else lw
         p = [(x - x0 + pad, y - y0 + pad) for x, y in pts]
         if op == 'l':
             shape.draw_line(fitz.Point(*p[0]), fitz.Point(*p[-1]))
@@ -190,7 +218,10 @@ def truth_raster(items, zoom=12):
     return Image.open(io.BytesIO(pm.tobytes('png'))).convert('L')
 
 
-def icon_raster(name, px=1024):
+ICON_PX = 1024      # アイコンのラスタ化サイズ。64pxキャンバスを何pxで描くか
+
+
+def icon_raster(name, px=ICON_PX):
     import cairosvg
     png = cairosvg.svg2png(url=os.path.join(ROOT, 'icons', name),
                            output_width=px, output_height=px, background_color='white')
@@ -271,6 +302,8 @@ def verdict(code, items, aspect, i2t, t2i):
         return '測定不可', ''
     if aspect <= ASPECT_NG and min(i2t, t2i) >= COVER_NG:
         return '一致', ''
+    if code in REVIEWED:
+        return '確認済', REVIEWED[code]
     return '要確認', ''
 
 
@@ -283,8 +316,17 @@ def measure(code, fname, geom):
     if not items:
         return dict(code=code, name=entry['name'], items=[], aspect=None,
                     i2t=None, t2i=None, truth=None, icon=None)
-    truth, tsz = normalize(truth_raster(items))
     icon, isz = normalize(icon_raster(fname))
+    # 図式の線幅をアイコン側と同じ相対太さに揃える（形だけを比べるため）
+    xs = [p[0] for it in items for p in it[2]]
+    ys = [p[1] for it in items for p in it[2]]
+    span_pt = max(max(xs) - min(xs), max(ys) - min(ys))
+    stroke = None
+    if icon is not None and isz:
+        # isz は ICON_PX 基準の画素数なので、64pxキャンバス上の大きさに直す
+        icon_span = max(isz) * 64 / ICON_PX
+        stroke = ICON_STROKE / icon_span * span_pt
+    truth, tsz = normalize(truth_raster(items, stroke=stroke))
     if truth is None or icon is None:
         return dict(code=code, name=entry['name'], items=items, aspect=None,
                     i2t=None, t2i=None, truth=None, icon=None)
