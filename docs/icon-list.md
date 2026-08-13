@@ -2,9 +2,9 @@
 
 > `python3 tools/gen_icon_list.py` で生成。直接編集しない。
 
-収録数: **160件**
+収録数: **167件**
 
-標準図式のカバレッジ: **153/185件**（未作成 32件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
+標準図式のカバレッジ: **160/185件**（未作成 25件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
 
 ## 追加履歴
 
@@ -21,6 +21,7 @@
 | 2026-01-30 | 14 | `7607587` | add road invention icon | 2238 2239 2253 4101 4111 4121 4131 4141 4151 4161 4215 4216 4237 4238 |
 | 2026-01-27 | 56 | `29a6531` | Add topographic map icon | 3509 3510 3514 3516 3521 3522 3523 3525 3526 3532 3534 3536 3545 3548 3550 3556 4201 4202 4203 4204 4205 4207 4219 42… |
 | 2024-09-03 | 1 | `374ee7a` | Initial commit | map-pin |
+| - | 7 | `-` |  | 6221 6223 6224 6225 6312 6315 6316 |
 
 ## 一覧
 
@@ -144,11 +145,18 @@
 | <img src="../icons/dm-6215.svg" width="28" height="28"> | `dm-6215.svg` | 6215 | 墓地 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-6216.svg" width="28" height="28"> | `dm-6216.svg` | 6216 | 材料置場 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-6217.svg" width="28" height="28"> | `dm-6217.svg` | 6217 | 太陽光発電設備 | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-6221.svg" width="28" height="28"> | `dm-6221.svg` | 6221 | 噴火口・噴気口 | 標準図式 | - |
 | <img src="../icons/dm-6222.svg" width="28" height="28"> | `dm-6222.svg` | 6222 | 温泉・鉱泉 | 標準図式 | 2026-02-10 |
+| <img src="../icons/dm-6223.svg" width="28" height="28"> | `dm-6223.svg` | 6223 | 陵墓 | 標準図式 | - |
+| <img src="../icons/dm-6224.svg" width="28" height="28"> | `dm-6224.svg` | 6224 | 古墳 | 標準図式 | - |
+| <img src="../icons/dm-6225.svg" width="28" height="28"> | `dm-6225.svg` | 6225 | 城・城跡 | 標準図式 | - |
 | <img src="../icons/dm-6226.svg" width="28" height="28"> | `dm-6226.svg` | 6226 | 史跡・名勝・天然記念物 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-6311.svg" width="28" height="28"> | `dm-6311.svg` | 6311 | 田 | 標準図式 | 2026-01-27 |
+| <img src="../icons/dm-6312.svg" width="28" height="28"> | `dm-6312.svg` | 6312 | はす田 | 標準図式 | - |
 | <img src="../icons/dm-6313.svg" width="28" height="28"> | `dm-6313.svg` | 6313 | 畑 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-6314.svg" width="28" height="28"> | `dm-6314.svg` | 6314 | さとうきび畑 | 標準図式 | 2026-02-26 |
+| <img src="../icons/dm-6315.svg" width="28" height="28"> | `dm-6315.svg` | 6315 | パイナップル畑 | 標準図式 | - |
+| <img src="../icons/dm-6316.svg" width="28" height="28"> | `dm-6316.svg` | 6316 | わさび畑 | 標準図式 | - |
 | <img src="../icons/dm-6317.svg" width="28" height="28"> | `dm-6317.svg` | 6317 | 桑畑 | 標準図式 | 2026-01-27 |
 | <img src="../icons/dm-6318.svg" width="28" height="28"> | `dm-6318.svg` | 6318 | 茶畑 | 標準図式 | 2026-02-10 |
 | <img src="../icons/dm-6319.svg" width="28" height="28"> | `dm-6319.svg` | 6319 | 果樹園 | 標準図式 | 2026-01-27 |

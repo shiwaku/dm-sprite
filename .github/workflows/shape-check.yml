@@ -1,0 +1,38 @@
+name: "Shape Check"
+
+# アイコンの形が図式から起こした基準形状と一致しているかを判定する。
+# 基準形状は data/zushiki-geometry.json（図式PDFから抜いてコミットしたもの）なので、
+# ここでは図式PDFを取得しない。基準値 data/shape-baseline.csv からずれたら落ちる。
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "icons/**"
+      - "data/icons.csv"
+      - "data/zushiki-geometry.json"
+      - "data/shape-baseline.csv"
+      - "tools/verify_shapes.py"
+      - ".github/workflows/shape-check.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2
+          python -m pip install --upgrade pip
+          pip install pymupdf cairosvg numpy pillow
+
+      - name: Verify icon shapes against the reference geometry
+        run: python3 tools/verify_shapes.py --check
