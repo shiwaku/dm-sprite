@@ -9,6 +9,7 @@
 | [docs/icon-list.md](docs/icon-list.md) | 収録アイコンの一覧と追加履歴 |
 | [docs/symbol-coverage.md](docs/symbol-coverage.md) | 図式に定義された記号のうちアイコンが要るのは何件で、残りは何件かの台帳 |
 | [data/shape-baseline.csv](data/shape-baseline.csv) | 各アイコンが図式の形と一致しているかの判定（`verify_shapes.py --check` が突き合わせる） |
+| [data/standard-codes.csv](data/standard-codes.csv) | 標準図式の全453コード。標準か拡張（自治体・ベンダ独自）かの判定に使う |
 | [docs/icon-authoring-guide.md](docs/icon-authoring-guide.md) | 標準図式から SVG を起こす手順（図式の読み取り・大きさの決め方・作図・検証・公開） |
 | [docs/svg-design-spec.md](docs/svg-design-spec.md) | SVG 設計基準（64×64・単色・ストローク不使用など） |
 
@@ -27,7 +28,7 @@ python3 tools/verify_shapes.py --check # 形が図式から起こした基準形
 図式の台帳 [`data/symbols.csv`](data/symbols.csv) は図式 PDF から起こしたもので、作り直すときだけ PDF が要る。
 
 ```bash
-python3 tools/extract_symbol_table.py ~/公共測量標準図式.pdf     # data/symbols.csv を再抽出
+python3 tools/extract_symbol_table.py ~/公共測量標準図式.pdf     # data/symbols.csv と data/standard-codes.csv を再抽出
 python3 tools/dump_zushiki_geometry.py ~/公共測量標準図式.pdf    # data/zushiki-geometry.json を再抽出
 ```
 

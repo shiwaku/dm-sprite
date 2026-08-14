@@ -12,6 +12,12 @@
 #   標準図式（レイヤ11〜81） / 応用測量（線形図・用地・整飾） / 測量記録
 # 縦向きの注記ページは全件 E7（注記）で点記号を含まないため対象外。
 #
+# あわせて巻末の「取得分類コード表」から data/standard-codes.csv を書き出す。
+# **こちらが「そのコードが標準図式にあるか」の判定に使う表。** 基準表は図式の
+# 定義がある記号だけを載せているので、注記（81xx/82xx）と「未分類」行が落ちる。
+# symbols.csv 372件に対しコード表は453件で、前者は後者の完全な部分集合になる。
+# 標準に無いコード（自治体・ベンダの拡張）を機械的に見分けるには453件のほうが要る。
+#
 # 表の読み方は PDF の「図式の見方」ページのとおり。列位置はページごとに
 # 微妙に違う（応用測量の表は本体より右にずれている）ので、罫線と見出し文字
 # から列を割り出している。
@@ -26,6 +32,7 @@ import fitz  # PyMuPDF
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'data', 'symbols.csv')
+OUT_CODES = os.path.join(ROOT, 'data', 'standard-codes.csv')
 OVERRIDES = os.path.join(ROOT, 'data', 'symbols-overrides.csv')
 
 PDF_URL = 'https://www.gsi.go.jp/common/000258741.pdf'
@@ -293,6 +300,50 @@ def extract(pdf_path):
     return rows
 
 
+CODE_TABLE_MARK = '取得分類コード表'
+# 「11 XX 境界・所属界」のレイヤ見出しと、「82 2X 基準点網図」の小見出し
+GROUP_HEAD = re.compile(r'(\d{2})\s+(?:XX|\dX)')
+CODE_CELL = re.compile(r'(\d{2})\s+(\d{2})')
+
+
+def extract_code_table(doc):
+    """巻末の取得分類コード表から {コード: (名称, レイヤ, レイヤ名)} を返す。
+
+    縦組みの多段レイアウトだが、セルは「11 01」「都府県界」のように必ず
+    2行1組で並ぶので、行の対で読める。段の順序は入り乱れるが、コードが
+    セル自身に書かれているので順序に依存しない。"""
+    out = {}
+    layer_names = {}
+    for page in doc:
+        text = page.get_text()
+        if CODE_TABLE_MARK not in text[:200]:
+            continue
+        lines = [ln.strip() for ln in text.split('\n')]
+        for cur, nxt in zip(lines, lines[1:]):
+            head = GROUP_HEAD.fullmatch(cur)
+            if head:
+                layer_names.setdefault(head.group(1), clean(nxt))
+                continue
+            m = CODE_CELL.fullmatch(cur)
+            if not m or not nxt:
+                continue
+            if GROUP_HEAD.fullmatch(nxt) or CODE_CELL.fullmatch(nxt):
+                continue  # 次の行もコードなら、この行の名称は別の段にある
+            out.setdefault(m.group(1) + m.group(2), (clean(nxt), m.group(1)))
+    return {code: (name, layer, layer_names.get(layer, ''))
+            for code, (name, layer) in out.items()}
+
+
+def write_code_table(codes):
+    rows = [{'コード': c, '名称': n, 'レイヤ': l, 'レイヤ名': ln}
+            for c, (n, l, ln) in sorted(codes.items())]
+    with open(OUT_CODES, 'w', encoding='utf-8', newline='') as fp:
+        w = csv.DictWriter(fp, fieldnames=['コード', '名称', 'レイヤ', 'レイヤ名'])
+        w.writeheader()
+        w.writerows(rows)
+    return rows
+
+
 def load_icons():
     """4桁コード -> アイコンファイル名。ここでは進捗の表示にだけ使う。
 
@@ -379,6 +430,22 @@ def main():
     bad = [k for k, v in dupes.items() if v > 1]
     if bad:
         print(f'  同じコードが複数行にわたっています: {bad}', file=sys.stderr)
+
+    codes = extract_code_table(fitz.open(pdf))
+    code_rows = write_code_table(codes)
+    print(f'{OUT_CODES} を書き出しました（{len(code_rows)}件）')
+
+    # 基準表は「図式の定義がある記号」だけなので、コード表の部分集合になるはず。
+    # ここが崩れたらどちらかの抽出が壊れている。
+    orphan = sorted({r['コード'] for r in out_rows} - set(codes))
+    if orphan:
+        print(f'  基準表にありコード表に無いコード: {orphan}', file=sys.stderr)
+
+    # 標準に無いコードは自治体・ベンダの拡張。#20 の仕分けはこの表で判定する。
+    ext = sorted({c for c in icons if c and c not in codes})
+    if ext:
+        print(f'  標準図式に無いアイコンのコード（拡張） {len(ext)}件: '
+              f'{" ".join(ext)}')
 
 
 if __name__ == '__main__':
