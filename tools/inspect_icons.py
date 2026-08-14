@@ -29,8 +29,11 @@ def measure(path):
     ys, xs = np.where(a < 200)
     if len(xs) == 0:
         return None
-    x0, x1 = xs.min() / SCALE, xs.max() / SCALE
-    y0, y1 = ys.min() / SCALE, ys.max() / SCALE
+    # 画素の外縁どうしで測る。min/max は画素の位置なので、そのまま引くと
+    # 端の1画素ぶん（SCALE=16 なら 0.0625px）短く出る。ちょうど基準の
+    # 10px に接している記号が 9.94px と表示され、基準割れに見えてしまう。
+    x0, x1 = xs.min() / SCALE, (xs.max() + 1) / SCALE
+    y0, y1 = ys.min() / SCALE, (ys.max() + 1) / SCALE
 
     # 各行の黒画素の連続長を集め、その中央値を線幅とみなす。
     # 水平な線を含む記号では線の長さ自体を拾ってしまうため、参考値として扱う。
