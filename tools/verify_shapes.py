@@ -37,6 +37,7 @@
 # 一致は意味しない。読み方は docs/icon-authoring-guide.md「比率差の読み方」。
 # -----------------------------------------
 import csv
+import filecmp
 import io
 import json
 import math
@@ -225,11 +226,15 @@ def truth_raster(items, zoom=12, stroke=None):
 ICON_PX = 1024      # アイコンのラスタ化サイズ。64pxキャンバスを何pxで描くか
 
 
-def icon_raster(name, px=ICON_PX):
+def svg_raster(path, px=ICON_PX):
     import cairosvg
-    png = cairosvg.svg2png(url=os.path.join(ROOT, 'icons', name),
-                           output_width=px, output_height=px, background_color='white')
+    png = cairosvg.svg2png(url=path, output_width=px, output_height=px,
+                           background_color='white')
     return Image.open(io.BytesIO(png)).convert('L')
+
+
+def icon_raster(name, px=ICON_PX):
+    return svg_raster(os.path.join(ROOT, 'icons', name), px)
 
 
 def normalize(img):
@@ -261,6 +266,62 @@ def targets(only):
         known = {r['コード'] for r in csv.DictReader(fp)}
     out = [(r['4桁コード'], r['ファイル名']) for r in rows if r['4桁コード'] in known]
     return [t for t in out if not only or t[0] in only]
+
+
+SAME_ASPECT, SAME_COVER = 2.0, 95.0   # ここを満たせば「同じ形」とみなせる
+
+
+def icon_names():
+    """ファイル名 -> 名称。--similar の表示用。"""
+    path = os.path.join(ROOT, 'data', 'icons.csv')
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding='utf-8-sig', newline='') as fp:
+        return {r['ファイル名']: r['名称'] for r in csv.DictReader(fp)}
+
+
+def similar(path, top=10):
+    """指定したSVGと形が近い既存アイコンを、近い順に出す。
+
+    拡張DMコードのアイコンを起こす前に「同じ形が既にあるか」を機械的に見るための
+    もの。図式との照合と同じ土俵（インクbboxで正規化し、線幅の差は膨張で吸収）で
+    比べるので、大きさの違いは無視され、形だけが効く。"""
+    target = os.path.abspath(path)
+    a, asz = normalize(svg_raster(target))
+    if a is None:
+        sys.exit(f'{path} にインクがありません')
+    names = icon_names()
+    rows = []
+    for fname in sorted(os.listdir(os.path.join(ROOT, 'icons'))):
+        if not fname.endswith('.svg'):
+            continue
+        full = os.path.join(ROOT, 'icons', fname)
+        if os.path.abspath(full) == target:
+            continue
+        b, bsz = normalize(icon_raster(fname))
+        if b is None:
+            continue
+        aspect = abs(asz[0] / asz[1] - bsz[0] / bsz[1]) / (asz[0] / asz[1]) * 100
+        rows.append((fname, aspect, coverage(a, b), coverage(b, a),
+                     filecmp.cmp(target, full, shallow=False)))
+    rows.sort(key=lambda r: (-min(r[2], r[3]), r[1]))
+
+    print(f'{os.path.basename(path)} と形が近い既存アイコン\n')
+    print(f'{"ファイル":26}{"比率差":>8}{"→既存":>8}{"既存→":>8}  判定  名称')
+    for fname, aspect, i2j, j2i, same in rows[:top]:
+        if same:
+            mark = '同一'
+        elif aspect <= SAME_ASPECT and min(i2j, j2i) >= SAME_COVER:
+            mark = '同形'
+        elif aspect <= ASPECT_NG and min(i2j, j2i) >= COVER_NG:
+            mark = '近い'
+        else:
+            mark = '—  '
+        print(f'{fname:26}{aspect:7.1f}%{i2j:7.1f}%{j2i:7.1f}%  {mark}  '
+              f'{names.get(fname, "")}')
+    print(f'\n「同形」以上が出たら、そのアイコンで代替できないか検討する。'
+          f'\n代替する場合、スプライトには足さない。利用側がそのキーを指し、'
+          f'\n対応と根拠は利用側のプロジェクトに記録する。')
 
 
 GEOMETRY = os.path.join(ROOT, 'data', 'zushiki-geometry.json')
@@ -363,6 +424,10 @@ def write_baseline(rows):
 
 def main():
     args = sys.argv[1:]
+    if '--similar' in args:
+        i = args.index('--similar')
+        similar(args[i + 1])
+        return
     overlay_path = None
     if '--overlay' in args:
         i = args.index('--overlay')
