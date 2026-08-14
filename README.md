@@ -1,20 +1,20 @@
 # 公共測量成果スプライト
 
-公共測量標準図式（作業規程の準則 付録7）の地図記号を、MapLibre 向けスプライトシートとして配信する。
+公共測量標準図式（作業規程の準則 付録7）の地図記号を、MapLibre 向けスプライトシートとして配信しています。
 
 ## 使う側へ — 分類コードとアイコンキーの対応
 
-**標準図式のコードは `dm-<4桁コード>` をそのまま引けばよい。** 全国共通なので、どの自治体のデータでも同じキーで正しい記号が出る。
+**標準図式のコードは `dm-<4桁コード>` をそのまま引いてください。** 全国共通ですので、どの自治体のデータでも同じキーで正しい記号が表示されます。
 
 ```js
 'icon-image': ['concat', 'dm-', ['get', '分類コード']]   // 4132 → dm-4132
 ```
 
-**標準図式に無いコード（自治体・ベンダ独自の拡張DMコード）は、この方法で引いてはいけない。** 標準から外れた枠は提供元ごとに意味が違うため、同じ `4191` でも自治体が変われば別の地物を指す。標準か拡張かは [`data/standard-codes.csv`](data/standard-codes.csv)（453コード）に在るかどうかで機械的に分かる。
+**標準図式に無いコード（自治体・ベンダ独自の拡張DMコード）は、この方法では引かないようにお願いします。** 標準から外れた枠は提供元ごとに意味が異なるため、同じ `4191` でも自治体が変われば別の地物を指します。標準か拡張かは、[`data/standard-codes.csv`](data/standard-codes.csv)（453コード）に在るかどうかで機械的に判別できます。
 
 ### 拡張コードをどう引くか
 
-拡張コードのアイコンには、キーに提供元の区画が入る。
+拡張コードのアイコンには、キーに提供元の区画が入ります。
 
 ```
 dm-4132              標準図式。全国共通
@@ -22,14 +22,14 @@ dm-toyonaka-4143     拡張DM。豊中市の運用
 dm-ext1-9109         拡張DM。提供元が未特定のもの
 ```
 
-**ただし、拡張コードのすべてがこのスプライトに入るわけではない。** 既存のアイコンと意匠が同じなら、こちらには追加せず、**利用側が既存のキーを指す**。同じ絵を別のキーで二重に配らないため。
+**ただし、拡張コードのすべてがこのスプライトに入るわけではありません。** 既存のアイコンと意匠が同じ場合は、こちらには追加せず、**利用側で既存のキーを指していただく**形になります。同じ絵を別のキーで二重に配らないためです。
 
 | 図面の意匠 | アイコンキー | 対応の記録 |
 |---|---|---|
-| 既存アイコンと同じ | 既存のキーを指す（例 `dm-4161`） | **利用側のプロジェクトに記録する** |
-| 既存に無い意匠 | `dm-<提供元>-<コード>` として追加を依頼 | このリポジトリに記録される |
+| 既存アイコンと同じ | 既存のキーを指す（例 `dm-4161`） | **利用側のプロジェクトに記録してください** |
+| 既存に無い意匠 | `dm-<提供元>-<コード>` として追加をご依頼ください | このリポジトリに記録されます |
 
-**実例。** 豊中市の道路台帳平面図では、拡張コード `4191` が ㊌（丸囲みの「水」）で描かれている。この意匠は標準図式の `4161` マンホール（水道）とまったく同じで、図面も両者を記号で描き分けていない。そのため `dm-toyonaka-4191` は作らず、**利用側で `4191` の地物に `dm-4161` を指定する**。
+**実例をご紹介します。** 豊中市の道路台帳平面図では、拡張コード `4191` が ㊌（丸囲みの「水」）で描かれています。この意匠は標準図式の `4161` マンホール（水道）とまったく同じで、図面も両者を記号で描き分けていません。そのため `dm-toyonaka-4191` は作らず、**利用側で `4191` の地物に `dm-4161` を指定していただきます**。
 
 ```js
 // 利用側のコード対応表（豊中市の道路台帳平面図）
@@ -40,9 +40,9 @@ const ICON = {
 };
 ```
 
-**この対応と根拠は、利用側のプロジェクトに書く。** どのコードをどのアイコンで代替したかは、そのデータを扱うプロジェクトごとの判断だから。スプライト側は「どんなアイコンが存在するか」だけを提供する。
+**この対応と根拠は、利用側のプロジェクトに書き残してください。** どのコードをどのアイコンで代替したかは、そのデータを扱うプロジェクトごとのご判断になるためです。スプライト側では「どんなアイコンが存在するか」のみを提供しています。
 
-意匠が既存と同じかどうかは、こちらで機械的に確認できる。
+意匠が既存と同じかどうかは、次のコマンドで機械的にご確認いただけます。
 
 ```bash
 python3 tools/verify_shapes.py --similar 図面から起こした案.svg
@@ -53,13 +53,13 @@ python3 tools/verify_shapes.py --similar 図面から起こした案.svg
 | ドキュメント | 内容 |
 |---|---|
 | [docs/icon-list.md](docs/icon-list.md) | 収録アイコンの一覧と追加履歴 |
-| [docs/symbol-coverage.md](docs/symbol-coverage.md) | 図式に定義された記号のうちアイコンが要るのは何件で、残りは何件かの台帳 |
-| [data/shape-baseline.csv](data/shape-baseline.csv) | 各アイコンが図式の形と一致しているかの判定（`verify_shapes.py --check` が突き合わせる） |
-| [data/standard-codes.csv](data/standard-codes.csv) | 標準図式の全453コード。標準か拡張（自治体・ベンダ独自）かの判定に使う |
+| [docs/symbol-coverage.md](docs/symbol-coverage.md) | 図式に定義された記号のうち、アイコンが必要なのは何件で残りは何件かの台帳 |
+| [data/shape-baseline.csv](data/shape-baseline.csv) | 各アイコンが図式の形と一致しているかの判定（`verify_shapes.py --check` が突き合わせます） |
+| [data/standard-codes.csv](data/standard-codes.csv) | 標準図式の全453コード。標準か拡張（自治体・ベンダ独自）かの判定に使います |
 | [docs/icon-authoring-guide.md](docs/icon-authoring-guide.md) | 標準図式から SVG を起こす手順（図式の読み取り・大きさの決め方・作図・検証・公開） |
 | [docs/svg-design-spec.md](docs/svg-design-spec.md) | SVG 設計基準（64×64・単色・ストローク不使用など） |
 
-作図と検証には `tools/` のスクリプトを使う。
+作図と検証には、`tools/` のスクリプトをお使いください。
 
 ```bash
 python3 tools/gen_icons.py --install   # 作図ヘルパと作例。icons/ に書き出す
@@ -70,16 +70,16 @@ python3 tools/verify_shapes.py --check # 形が図式から起こした基準形
 python3 tools/verify_shapes.py --similar 案.svg  # 同じ形の既存アイコンが無いか
 ```
 
-アイコンを追加したら [`data/icons.csv`](data/icons.csv)（名称のマスタ）に行を足し、コミット後に `gen_icon_list.py` を実行して一覧を更新する。カバレッジ側は `gen_symbol_coverage.py` で更新する。
+アイコンを追加された際は、[`data/icons.csv`](data/icons.csv)（名称のマスタ）に行を足していただき、コミット後に `gen_icon_list.py` を実行して一覧を更新してください。カバレッジ側は `gen_symbol_coverage.py` で更新できます。
 
-図式の台帳 [`data/symbols.csv`](data/symbols.csv) は図式 PDF から起こしたもので、作り直すときだけ PDF が要る。
+図式の台帳 [`data/symbols.csv`](data/symbols.csv) は図式 PDF から起こしたもので、作り直すときのみ PDF が必要です。
 
 ```bash
 python3 tools/extract_symbol_table.py ~/公共測量標準図式.pdf     # data/symbols.csv と data/standard-codes.csv を再抽出
 python3 tools/dump_zushiki_geometry.py ~/公共測量標準図式.pdf    # data/zushiki-geometry.json を再抽出
 ```
 
-PDF は国土地理院が公開している[作業規程の準則 付録7 公共測量標準図式](https://www.gsi.go.jp/common/000258741.pdf)。サイズが大きいのでリポジトリには置いていない。
+PDF は国土地理院が公開している[作業規程の準則 付録7 公共測量標準図式](https://www.gsi.go.jp/common/000258741.pdf)です。サイズが大きいため、リポジトリには置いていません。
 
 ---
 
@@ -87,7 +87,7 @@ PDF は国土地理院が公開している[作業規程の準則 付録7 公共
 
 <!-- icon-history:start -->
 
-収録数 **167件**。日付は git 履歴（そのファイルが追加されたコミット）による。
+収録数は **167件** です。日付は git 履歴（そのファイルが追加されたコミット）によります。
 
 | 追加日 | 件数 | 追加したアイコン | 内容 |
 |---|---:|---|---|
@@ -104,7 +104,7 @@ PDF は国土地理院が公開している[作業規程の準則 付録7 公共
 | 2026-01-27 | 56 | <img src="icons/dm-3509.svg" width="22" height="22" title="郵便局"> <img src="icons/dm-3510.svg" width="22" height="22" title="森林管理署"> <img src="icons/dm-3514.svg" width="22" height="22" title="警察署"> <img src="icons/dm-3516.svg" width="22" height="22" title="消防署"> <img src="icons/dm-3521.svg" width="22" height="22" title="神社"> <img src="icons/dm-3522.svg" width="22" height="22" title="寺院"> <img src="icons/dm-3523.svg" width="22" height="22" title="キリスト教会"> <img src="icons/dm-3525.svg" width="22" height="22" title="幼稚園・保育園"> <img src="icons/dm-3526.svg" width="22" height="22" title="公会堂・公民館"> <img src="icons/dm-3532.svg" width="22" height="22" title="病院"> <img src="icons/dm-3534.svg" width="22" height="22" title="銀行"> <img src="icons/dm-3536.svg" width="22" height="22" title="協同組合"> <img src="icons/dm-3545.svg" width="22" height="22" title="倉庫"> <img src="icons/dm-3548.svg" width="22" height="22" title="工場"> <img src="icons/dm-3550.svg" width="22" height="22" title="変電所"> <img src="icons/dm-3556.svg" width="22" height="22" title="揚排水ポンプ場"> <img src="icons/dm-4201.svg" width="22" height="22" title="墓碑"> <img src="icons/dm-4202.svg" width="22" height="22" title="記念碑"> <img src="icons/dm-4203.svg" width="22" height="22" title="立像"> <img src="icons/dm-4204.svg" width="22" height="22" title="路傍祠"> <img src="icons/dm-4205.svg" width="22" height="22" title="灯ろう"> <img src="icons/dm-4207.svg" width="22" height="22" title="鳥居"> <img src="icons/dm-4219.svg" width="22" height="22" title="坑口"> <img src="icons/dm-4228.svg" width="22" height="22" title="起重機"> <img src="icons/dm-4234.svg" width="22" height="22" title="煙突"> <img src="icons/dm-4235.svg" width="22" height="22" title="高塔"> <img src="icons/dm-4236.svg" width="22" height="22" title="電波塔"> <img src="icons/dm-5105.svg" width="22" height="22" title="湖池"> <img src="icons/dm-5226.svg" width="22" height="22" title="滝"> <img src="icons/dm-5228.svg" width="22" height="22" title="水門"> <img src="icons/dm-5241.svg" width="22" height="22" title="流水方向"> <img src="icons/dm-6214.svg" width="22" height="22" title="園庭"> <img src="icons/dm-6215.svg" width="22" height="22" title="墓地"> <img src="icons/dm-6216.svg" width="22" height="22" title="材料置場"> <img src="icons/dm-6226.svg" width="22" height="22" title="史跡・名勝・天然記念物"> <img src="icons/dm-6311.svg" width="22" height="22" title="田"> <img src="icons/dm-6313.svg" width="22" height="22" title="畑"> <img src="icons/dm-6317.svg" width="22" height="22" title="桑畑"> <img src="icons/dm-6319.svg" width="22" height="22" title="果樹園"> <img src="icons/dm-6321.svg" width="22" height="22" title="その他の樹木畑"> <img src="icons/dm-6322.svg" width="22" height="22" title="牧草地"> <img src="icons/dm-6323.svg" width="22" height="22" title="芝地"> <img src="icons/dm-6331.svg" width="22" height="22" title="広葉樹林"> <img src="icons/dm-6332.svg" width="22" height="22" title="針葉樹林"> <img src="icons/dm-6333.svg" width="22" height="22" title="竹林"> <img src="icons/dm-6334.svg" width="22" height="22" title="荒地"> <img src="icons/dm-6336.svg" width="22" height="22" title="しの地（笹地）"> <img src="icons/dm-6338.svg" width="22" height="22" title="湿地"> <img src="icons/dm-6340.svg" width="22" height="22" title="砂れき地"> <img src="icons/dm-7202.svg" width="22" height="22" title="雨裂"> <img src="icons/dm-7213.svg" width="22" height="22" title="散岩"> <img src="icons/dm-7301.svg" width="22" height="22" title="三角点"> <img src="icons/dm-7302.svg" width="22" height="22" title="水準点"> <img src="icons/dm-7308.svg" width="22" height="22" title="電子基準点"> <img src="icons/dm-7312.svg" width="22" height="22" title="図化機測定による標高点"> <img src="icons/dm-8199.svg" width="22" height="22" title="指示点"> | Add topographic map icon |
 | 2024-09-03 | 1 | <img src="icons/map-pin.svg" width="22" height="22" title="マップピン"> | Initial commit |
 
-コードと名称は [docs/icon-list.md](docs/icon-list.md) を参照。
+コードと名称は [docs/icon-list.md](docs/icon-list.md) をご参照ください。
 
 <!-- icon-history:end -->
 
@@ -118,7 +118,7 @@ npm run build   # _site/ に sprite.png / sprite.json / sprite@2x.png / sprite@2
 npm run start   # ビルドしてローカルサーバーを起動（http://localhost:8080）
 ```
 
-`main` に push すると GitHub Actions がビルドして GitHub Pages にデプロイする。
-公開先は `https://<GitHub username>.github.io/<repository name>/sprite.png` など上記4ファイル。
+`main` に push すると、GitHub Actions がビルドして GitHub Pages にデプロイします。
+公開先は `https://<GitHub username>.github.io/<repository name>/sprite.png` ほか、上記の4ファイルです。
 
-MapLibre に複数のスプライトシートを読み込ませる方法は [公式ドキュメント](https://maplibre.org/maplibre-style-spec/sprite/#multiple-sprite-sources) を参照。
+MapLibre に複数のスプライトシートを読み込ませる方法は、[公式ドキュメント](https://maplibre.org/maplibre-style-spec/sprite/#multiple-sprite-sources) をご参照ください。

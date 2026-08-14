@@ -154,7 +154,8 @@ def write_readme_history(batches, names, total):
               file=sys.stderr)
         return
 
-    body = [f'収録数 **{total}件**。日付は git 履歴（そのファイルが追加されたコミット）による。',
+    body = [f'収録数は **{total}件** です。日付は git 履歴'
+            '（そのファイルが追加されたコミット）によります。',
             '',
             '| 追加日 | 件数 | 追加したアイコン | 内容 |',
             '|---|---:|---|---|']
@@ -163,7 +164,7 @@ def write_readme_history(batches, names, total):
             f'<img src="icons/{i[0]}" width="22" height="22" title="{i[1] or i[0]}">'
             for i in items)
         body.append(f'| {date} | {len(items)} | {thumbs} | {subject} |')
-    body += ['', 'コードと名称は [docs/icon-list.md](docs/icon-list.md) を参照。']
+    body += ['', 'コードと名称は [docs/icon-list.md](docs/icon-list.md) をご参照ください。']
 
     head, rest = s.split(BEGIN, 1)
     _, tail = rest.split(END, 1)
