@@ -2,7 +2,7 @@
 
 > `python3 tools/gen_icon_list.py` で生成。直接編集しない。
 
-収録数: **167件**
+収録数: **174件**
 
 標準図式のカバレッジ: **160/185件**（未作成 25件）。内訳は [symbol-coverage.md](symbol-coverage.md) を参照。
 
@@ -10,6 +10,7 @@
 
 | 追加日 | 件数 | コミット | 内容 | コード |
 |---|---:|---|---|---|
+| 2026-08-15 | 7 | `28781a7` | feat: 豊中市の拡張DMコード7件のアイコンを追加する | 2225 2248 4133 4134 4144 4145 4214 |
 | 2026-08-13 | 19 | `dee6799` | feat: 小物体（レイヤ42）の未作成アイコン19件を追加する | 4119 4206 4208 4211 4217 4223 4224 4225 4226 4227 4232 4233 4242 4245 4252 4253 4254 4255 4256 |
 | 2026-08-13 | 7 | `b0e7507` | feat: 形が図式と一致していることを機械保証する仕組みと、土地利用等7件を追加する | 6221 6223 6224 6225 6312 6315 6316 |
 | 2026-08-13 | 19 | `a91c117` | feat: 建物等（レイヤ35）の未作成アイコン19件を追加する | 3503 3504 3505 3507 3508 3511 3512 3513 3517 3518 3524 3527 3528 3529 3539 3549 3552 3553 3557 |
@@ -193,4 +194,11 @@
 | <img src="../icons/dm-ext1-9109.svg" width="28" height="28"> | `dm-ext1-9109.svg` | 9109 | 官民境界杭_道路 | 拡張DM | ext1 | 2026-02-20 |
 | <img src="../icons/dm-ext1-9303210.svg" width="28" height="28"> | `dm-ext1-9303210.svg` | 9303210 | 警報遮断機_道路 | 拡張DM | ext1 | 2026-02-20 |
 | <img src="../icons/dm-ext1-9303220.svg" width="28" height="28"> | `dm-ext1-9303220.svg` | 9303220 | 警報遮断機_道路 | 拡張DM | ext1 | 2026-02-20 |
+| <img src="../icons/dm-toyonaka-2225.svg" width="28" height="28"> | `dm-toyonaka-2225.svg` | 2225 | 塗りつぶしの長円（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
+| <img src="../icons/dm-toyonaka-2248.svg" width="28" height="28"> | `dm-toyonaka-2248.svg` | 2248 | 丸に「案」（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
+| <img src="../icons/dm-toyonaka-4133.svg" width="28" height="28"> | `dm-toyonaka-4133.svg` | 4133 | 丸に横線7本（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
+| <img src="../icons/dm-toyonaka-4134.svg" width="28" height="28"> | `dm-toyonaka-4134.svg` | 4134 | 丸に横線4本・上半分（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
+| <img src="../icons/dm-toyonaka-4144.svg" width="28" height="28"> | `dm-toyonaka-4144.svg` | 4144 | 丸に横線4本・下半分（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
+| <img src="../icons/dm-toyonaka-4145.svg" width="28" height="28"> | `dm-toyonaka-4145.svg` | 4145 | 丸に横線5本・下半分（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
+| <img src="../icons/dm-toyonaka-4214.svg" width="28" height="28"> | `dm-toyonaka-4214.svg` | 4214 | 三角形の旗（名称未確認） | 拡張DM | toyonaka | 2026-08-15 |
 | <img src="../icons/map-pin.svg" width="28" height="28"> | `map-pin.svg` | — | マップピン | その他 | — | 2024-09-03 |
