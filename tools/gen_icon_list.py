@@ -3,7 +3,9 @@
 #
 #   python3 tools/gen_icon_list.py
 #
-# 名称は data/icons.csv（ファイル名,4桁コード,名称,分類）から引く。
+# 名称は data/icons.csv（ファイル名,4桁コード,名称,分類,提供元）から引く。
+# 拡張DMコードは提供元ごとにキーを分けてあるので（dm-<提供元>-<コード>.svg）、
+# 表示するコードはファイル名から提供元の区画を外して作る。
 # アイコンを追加したら data/icons.csv に行を足してから実行する。
 # 追加日は git log --diff-filter=A から取るので、コミット後に実行すること。
 # -----------------------------------------
@@ -27,8 +29,17 @@ def load_names():
     names = {}
     with open(path, encoding='utf-8-sig', newline='') as fp:
         for row in csv.DictReader(fp):
-            names[row['ファイル名']] = (row['名称'], row['分類'])
+            names[row['ファイル名']] = (row['名称'], row['分類'],
+                                     (row.get('提供元') or '').strip())
     return names
+
+
+def display_code(fname, provider):
+    """一覧に出すコード。dm- と提供元の区画を外した残り。"""
+    if not fname.startswith('dm-'):
+        return '—'
+    key = fname.removeprefix('dm-').removesuffix('.svg')
+    return key.removeprefix(provider + '-') if provider else key
 
 
 def _icon_codes():
@@ -74,11 +85,11 @@ def main():
     rows = []
     missing = []
     for f in files:
-        name, kind = names.get(f, ('', '—'))
+        name, kind, provider = names.get(f, ('', '—', ''))
         if f not in names:
             missing.append(f)
         date, sha, subject = added_info(f)
-        rows.append((f, name, kind, date, sha, subject))
+        rows.append((f, name, kind, date, sha, subject, provider))
 
     batches = defaultdict(list)
     for r in rows:
@@ -102,7 +113,7 @@ def main():
         '|---|---:|---|---|---|',
     ]
     for (date, sha, subject), items in sorted(batches.items(), reverse=True):
-        codes = ' '.join(i[0].removeprefix('dm-').removesuffix('.svg') for i in items)
+        codes = ' '.join(display_code(i[0], i[6]) for i in items)
         if len(codes) > 120:
             codes = codes[:117] + '…'
         lines.append(f'| {date} | {len(items)} | `{sha}` | {subject} | {codes} |')
@@ -111,13 +122,13 @@ def main():
         '',
         '## 一覧',
         '',
-        '| | ファイル | コード | 名称 | 分類 | 追加日 |',
-        '|---|---|---|---|---|---|',
+        '| | ファイル | コード | 名称 | 分類 | 提供元 | 追加日 |',
+        '|---|---|---|---|---|---|---|',
     ]
-    for f, name, kind, date, sha, _ in rows:
+    for f, name, kind, date, sha, _, provider in rows:
         img = f'<img src="../icons/{f}" width="28" height="28">'
-        code = f.removeprefix('dm-').removesuffix('.svg') if f.startswith('dm-') else '—'
-        lines.append(f'| {img} | `{f}` | {code} | {name} | {kind} | {date} |')
+        lines.append(f'| {img} | `{f}` | {display_code(f, provider)} | {name} | '
+                     f'{kind} | {provider or "—"} | {date} |')
 
     lines.append('')
     with open(OUT, 'w', encoding='utf-8') as fp:
