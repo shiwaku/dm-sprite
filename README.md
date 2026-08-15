@@ -70,6 +70,8 @@ python3 tools/gen_icon_list.py         # docs/icon-list.md を再生成
 python3 tools/gen_symbol_coverage.py   # docs/symbol-coverage.md を再生成
 python3 tools/verify_shapes.py --check # 形が図式から起こした基準形状と一致しているか
 python3 tools/verify_shapes.py --similar 案.svg  # 同じ形の既存アイコンが無いか
+python3 tools/measure_drawing.py --pdf 図面.pdf --points 記号.geojson --calibrate
+                                       # 拡張コードの意匠・寸法を納品図面から実測する
 ```
 
 アイコンを追加された際は、[`data/icons.csv`](data/icons.csv)（名称のマスタ）に行を足していただき、コミット後に `gen_icon_list.py` を実行して一覧を更新してください。カバレッジ側は `gen_symbol_coverage.py` で更新できます。
