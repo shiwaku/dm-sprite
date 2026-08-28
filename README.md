@@ -55,6 +55,7 @@ python3 tools/verify_shapes.py --similar 図面から起こした案.svg
 | ドキュメント | 内容 |
 |---|---|
 | [docs/icon-list.md](docs/icon-list.md) | 収録アイコンの一覧と追加履歴 |
+| [図式とアイコンの見比べ](https://shiwaku.github.io/dm-sprite/shapes.html) | 図式の記号と作ったアイコンを1件ずつ並べたページ。判定で絞り込める |
 | [docs/symbol-coverage.md](docs/symbol-coverage.md) | 図式に定義された記号のうち、アイコンが必要なのは何件で残りは何件かの台帳 |
 | [data/shape-baseline.csv](data/shape-baseline.csv) | 各アイコンが図式の形と一致しているかの判定（`verify_shapes.py --check` が突き合わせます） |
 | [data/standard-codes.csv](data/standard-codes.csv) | 標準図式の全453コード。標準か拡張（自治体・ベンダ独自）かの判定に使います |

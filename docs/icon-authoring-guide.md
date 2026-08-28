@@ -308,6 +308,16 @@ write('7212', d, '半円＋弦中央の線分')
 
 切り出した図式画像と、作った SVG のレンダリングを並べて確認する。読み取りの手順そのものを検証したいときは、**既にあるアイコンを同じ手順で図式から読み直し、実物と一致するか**を見るとよい（例: 7211 岩がけ = 図式「(岩) 3.5×2.5mm」）。
 
+全件を一度に見比べるページを出せる。図式PDFは要らない（`data/zushiki-geometry.json` から図式を描き起こす）。
+
+```bash
+python3 tools/gen_shape_gallery.py     # _site/shapes.html
+```
+
+公開先は https://shiwaku.github.io/dm-sprite/shapes.html 。判定で絞り込めるので、
+**`要確認` だけを並べて1件ずつ見る**のが数値のふるいの後始末になる。図式もアイコンも
+インク外形の長辺をそろえて描くので、このページで比べられるのは形であって大きさではない。
+
 ### 形が図式と一致していることを保証する
 
 目視と寸法の実測だけでは「図式の形と合っているか」の証明にならない。図式から起こした**基準形状をリポジトリに置き**、それとの一致を機械判定する。
@@ -458,6 +468,7 @@ MapLibre 側は `icon-image` でスプライトのキー（= ファイル名か�
 | `tools/gen_icons.py` | 作図ヘルパと作例。`--install` で `icons/` に書き出す | 不要 |
 | `tools/inspect_icons.py` | bbox・中心・線幅の実測 | 不要 |
 | `tools/verify_shapes.py` | 形が基準形状と一致しているかの判定。`--check` はCIでも走る。`--similar` は既存アイコンとの突き合わせ | 不要 |
+| `tools/gen_shape_gallery.py` | 図式とアイコンを1件ずつ並べたページ `_site/shapes.html` を作る | 不要 |
 | `tools/measure_drawing.py` | **拡張コード専用。** 納品図面のPDFから意匠と寸法を実測する（`--calibrate` を先に通す） | 不要（納品図面が要る） |
 | `tools/dump_zushiki_geometry.py` | 基準形状 `data/zushiki-geometry.json` を作り直す | **要** |
 | `tools/extract_symbol_table.py` | 図式の台帳 `data/symbols.csv` を作り直す | **要** |

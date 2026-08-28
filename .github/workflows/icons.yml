@@ -31,6 +31,10 @@ jobs:
       - name: Build icons
         run: npm run build
 
+      # 図式とアイコンの見比べページ。標準ライブラリだけで動く（依存の追加は不要）
+      - name: Build shape gallery
+        run: python3 tools/gen_shape_gallery.py
+
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
