@@ -20,8 +20,11 @@ OUT = os.path.join(ROOT, 'docs', 'icon-list.md')
 
 
 def git(*args):
+    # encoding を明示する。text=True だけだとロケールの符号化で読むので、
+    # Windows（cp932）ではコミット件名の日本語で UnicodeDecodeError になり、
+    # stdout が None のまま返ってくる。git の出力は UTF-8。
     return subprocess.run(('git',) + args, cwd=ROOT, capture_output=True,
-                          text=True, check=True).stdout.strip()
+                          text=True, encoding='utf-8', check=True).stdout.strip()
 
 
 def load_names():
