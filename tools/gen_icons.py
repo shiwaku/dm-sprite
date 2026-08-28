@@ -16,6 +16,8 @@
 # 末尾は追加済みコードの作図例（2026-08 の標準図式6件、道路台帳向け8件）。
 # 新しい記号を足すときは同じ書き方で write(...) を1行ずつ増やす。
 # -----------------------------------------
+import functools
+import functools
 import math
 import os
 import re
@@ -205,7 +207,10 @@ FONT_CANDIDATES = [
 ]
 
 
+@functools.lru_cache(maxsize=None)
 def _font(weight):
+    # 可変フォントの実体化は1回あたり数秒かかる。同じウェイトを何度も引くので、
+    # ウェイトごとに1回だけ作って使い回す。
     from fontTools.ttLib import TTFont
     from fontTools.varLib import instancer
 
@@ -252,6 +257,28 @@ def glyph_box(ch, size, cx, cy, weight=400):
     x0, y0, x1, y1 = bp.bounds
     h = size if (y1 - y0) >= (x1 - x0) else size * (y1 - y0) / (x1 - x0)
     return glyph(ch, h, cx, cy, weight)
+
+
+def glyph_width(ch, height, weight=400):
+    """glyph(ch, height, ...) で置いたときの字面bboxの幅。
+
+    ink_bbox() はパスの制御点から測るので、曲線を含む字（括弧など）では実際の
+    インクより広く出る。括弧を字の脇に置くような位置決めでは、書体の字面bbox
+    そのものを使う必要がある。"""
+    from fontTools.pens.boundsPen import BoundsPen
+
+    font = _font(weight)
+    gs = font.getGlyphSet()
+    bp = BoundsPen(gs)
+    gs[font.getBestCmap()[ord(ch)]].draw(bp)
+    x0, y0, x1, y1 = bp.bounds
+    return (x1 - x0) * height / (y1 - y0)
+
+
+def glyph_box_size(ch, size, weight=400):
+    """glyph_box(ch, size, ...) で置いたときの字面bbox (幅, 高さ)。"""
+    w = glyph_width(ch, size, weight)
+    return (w, size) if w <= size else (size, size * size / w)
 
 
 def text(s, height, cx, cy, weight=400, width=None):
@@ -352,7 +379,13 @@ def center_ink(d, cx=None, cy=None):
     """インク外形の中心を (cx, cy) に合わせて平行移動する。
 
     マイター接合は尖った頂点で外へ伸び、バットキャップは伸びないので、
-    寸法どおりに組んだだけでは中心が 0.5px ほどずれることがある。"""
+    寸法どおりに組んだだけでは中心が 0.5px ほどずれることがある。
+
+    **glyph() / glyph_box() / text() が返すパスには掛けられない。** 数値を x,y の
+    並びとみなして順に足すので、座標を1つしか取らない H・V コマンドが混じると
+    以降の x と y が入れ替わって形が崩れる。書体のアウトラインは SVGPathPen が
+    H・V を出す。字は glyph() 自身が字面bboxの中心を (cx,cy) に置くので、
+    掛ける必要もない。"""
     cx = CX if cx is None else cx
     cy = CY if cy is None else cy
     x0, y0, x1, y1 = ink_bbox(d)
@@ -1303,3 +1336,110 @@ r2419 = w2419 / 2 - W2419 / 2
 d = arc_band(CX, CY, r2419, math.radians(180), math.radians(360), w=W2419)
 write('2419', center_ink(d),
       f'半円のアーチ 幅{w2419:.1f}px（図式が0.9ptのため線幅{W2419}px）')
+
+
+# =====================================================================
+# 土地利用等（62-xx / 63-xx）の未作成分。図式PDF p.106〜115。
+#
+# この系統の記号は文字が主体で、図式では線ではなく**塗り（文字のアウトライン）**で
+# 描かれている。記号本体の線幅を持たないので verify_shapes.py の基準形状が取れず、
+# 判定は「検証不可」になる（既存の 63-40 砂れき地・72-13 散岩と同じ）。
+# 線で描かれている 63-45 干潟だけは照合できる。
+#
+# **図式の図は行ごとに縮尺が違う。** 62-11 空地（4.0mm）と 62-13 花壇（3.0mm）は
+# 図の実測がどちらも 13.7pt で、mm 表記だけが違う。寸法は必ず図の寸法線の数字から
+# 読み、pt の実測は「形の比率」にだけ使う。
+#
+# 大きさは mm 比の厳密再現ではなく、同系統の既存アイコンから校正する。
+#   括弧つき文字（62-11・62-13） px/mm = 5.4  … 7201「(土)」の字（図式2.5mm＝13.5px）
+#   3文字の注記（62-31〜62-33） px/mm = 4.4  … 3559「W.C」の字高11px。5.4 では
+#                                              3文字で幅51pxになり余白が取れない
+#   S・G（63-41・63-42）        px/mm = 6.67 … 6340「S」（図式1.5mm＝10px）
+#   干潟（63-45）              px/mm = 7.0  … 6335 はい松地（図式2.0mm＝14px）
+# =====================================================================
+
+KAKKO = 5.4          # px/mm。括弧つき文字（7201「(土)」からの校正値）
+CHUKI = 4.4          # px/mm。3文字の注記（3559「W.C」の字高11pxからの校正値）
+SUNA = 6.67          # px/mm。S・G（6340「S」からの校正値）
+HIGATA = 7.0         # px/mm。干潟（6335 はい松地からの校正値）
+
+
+def kakko(ch, h, weight=400):
+    """（字）の形。括弧の高さとすき間は 62-11 の図式実測の比による。
+
+    図式(p.106)の実測(pt)は 字 7.25×9.96・括弧 1.99×9.82・字と括弧のすき間 1.24。
+    括弧の高さは字の 0.986倍、すき間は字の高さの 0.1245倍。"""
+    kw = glyph_width(ch, h, weight)
+    ph = 0.986 * h
+    gap = 0.1245 * h
+    lw, rw = glyph_width('(', ph, weight), glyph_width(')', ph, weight)
+    dx = (lw - rw) / 2          # 左右の括弧の字面幅の差ぶん。center_ink() は使わない
+    return (glyph(ch, h, CX + dx, CY, weight)
+            + glyph('(', ph, CX + dx - kw / 2 - gap - lw / 2, CY, weight)
+            + glyph(')', ph, CX + dx + kw / 2 + gap + rw / 2, CY, weight))
+
+
+def chuki(s):
+    """2.5mm の字を 1.0mm あけて横に並べた注記の記号（62-31〜62-33）。
+
+    図式(p.109)では3字の字面bboxが 8.28×8.17pt でそろえて描かれているので、
+    字ごとの字面差は見ず glyph_box() で長辺をそろえる。字送りは 2.5+1.0=3.5mm。
+
+    中心合わせに center_ink() は使わない（ink_bbox() は制御点から測るので、曲線を
+    持つ字では実際のインクより広く出る）。字はどれも字面bboxの中心が (cx,cy) に
+    来るので縦はそのまま中央、横は両端の字の字面幅の差だけずらせば中央になる。"""
+    h = 2.5 * CHUKI
+    pitch = 3.5 * CHUKI
+    dx = (glyph_box_size(s[0], h)[0] - glyph_box_size(s[-1], h)[0]) / 4
+    return ''.join(glyph_box(ch, h, CX + (i - 1) * pitch + dx, CY)
+                   for i, ch in enumerate(s))
+
+
+# ---- 62-11 空地（点E5） ----------------------------------------------
+# 図式(p.106): 「(空)」4.0×3.0mm。3.0 は字の高さ、4.0 は括弧を含む全幅。
+write('6211', kakko('空', 3.0 * KAKKO),
+      f'「(空)」字高{3.0 * KAKKO:.1f}px（Noto Sans JP 400 / OFL）')
+
+# ---- 62-13 花壇（点E5） ----------------------------------------------
+# 図式(p.106): 「(花)」3.0×2.0mm。62-11 と同じ形で字が一回り小さい。
+write('6213', kakko('花', 2.0 * KAKKO),
+      f'「(花)」字高{2.0 * KAKKO:.1f}px（Noto Sans JP 400 / OFL）')
+
+# ---- 62-31 採石場 / 62-32 土取場 / 62-33 採鉱地（点E5） ---------------
+# 図式(p.109): 「採 石 場」「土 取 場」「採 鉱 地」。字2.5mm・字間1.0mm。
+write('6231', chuki('採石場'), f'「採石場」字高{2.5 * CHUKI:.1f}px・字送り'
+      f'{3.5 * CHUKI:.1f}px（Noto Sans JP 400 / OFL）')
+write('6232', chuki('土取場'), f'「土取場」字高{2.5 * CHUKI:.1f}px・字送り'
+      f'{3.5 * CHUKI:.1f}px（Noto Sans JP 400 / OFL）')
+write('6233', chuki('採鉱地'), f'「採鉱地」字高{2.5 * CHUKI:.1f}px・字送り'
+      f'{3.5 * CHUKI:.1f}px（Noto Sans JP 400 / OFL）')
+
+# ---- 63-41 砂地 / 63-42 れき地（点E5） --------------------------------
+# 図式(p.115): 「S」1.5mm /「G」1.5mm。
+# **63-40 砂れき地（未分類）の図式も同じ「S」1.5mm** なので、63-41 の意匠は既存の
+# dm-6340.svg と同じになる。標準コードは全国共通のキーとして引かれるため、意匠が
+# 同じでもコードごとにアイコンを置く（拡張コードで既存キーを指してもらう扱いとは
+# 別の話）。ウェイトは 6340 の実測（7.06×10.00px・線幅2.19px）に最も近い600を採る
+# （600 の出力は 7.00×10.00px・線幅2.25px）。
+# glyph() は字面bboxの中心を (32,32) に置くので center_ink() は掛けない
+# （ink_bbox() は制御点から測るため、曲線だけでできた字では中心がずれる）。
+S_H = 1.5 * SUNA
+write('6341', glyph('S', S_H, CX, CY, weight=600),
+      f'「S」字高{S_H:.1f}px（Noto Sans JP 600 / OFL・6340と同一意匠）')
+write('6342', glyph('G', S_H, CX, CY, weight=600),
+      f'「G」字高{S_H:.1f}px（Noto Sans JP 600 / OFL）')
+
+# ---- 63-45 干潟（点E5） ----------------------------------------------
+# 図式(p.115): 短い横線2本。上の線が2.0mm、下の線は右へずれて全幅3.0mm、
+# 上下の間隔1.5mm。図式には同じ組が3つ散らして描かれているので、寸法の入った
+# 左の組だけを採る（verify_shapes.py の EXCLUDE に理由つきで書いてある）。
+# 比率は実測(pt)どおり: 線長6.34・右へのずれ3.20・上下の間隔4.49。
+# 間隔だけ表記1.5mm（=4.755pt）と実測4.49pt が5%ずれるが、照合の相手は図式の
+# 描画そのものなので実測比を採る。
+bar = 2.0 * HIGATA
+off = bar * (3.20 / 6.34)
+gap = bar * (4.49 / 6.34)
+d = (seg((CX - bar / 2, CY - gap / 2), (CX + bar / 2, CY - gap / 2)) +
+     seg((CX - bar / 2 + off, CY + gap / 2), (CX + bar / 2 + off, CY + gap / 2)))
+write('6345', center_ink(d),
+      f'横線2本 長さ{bar:.1f}px・右へ{off:.1f}px ずらして間隔{gap:.1f}px')
